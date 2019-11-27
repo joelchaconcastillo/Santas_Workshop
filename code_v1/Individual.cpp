@@ -4,8 +4,8 @@
 #include "utils.h"
 using namespace std;
 
-long long Individual::calculateFitness(vector<int> &x_ind){
-  return 0;
+double Individual::calculateFitness(vector<int> &x_ind){
+  return SW->evaluate(x_var);
 }
 
 void printBest(){
@@ -30,8 +30,13 @@ void Individual::print(){
 }
 void Individual::initialization()
 {
+   x_var.resize(domain.size(), 0);
+   for(int i = 0; i < domain.size(); i++)
+   {
+	x_var[i] = domain[i][rand()%domain[i].size()];
+   }
 }
-long long Individual::incremental_evaluation()
+double Individual::incremental_evaluation()
 {
   return 0;
 }

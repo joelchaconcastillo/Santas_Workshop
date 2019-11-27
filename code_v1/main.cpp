@@ -17,7 +17,8 @@ int main(int argc, char **argv){
 	//ma.run();
 	//
 	  Individual indiv(SW);
-	  long long p = indiv.calculateFitness(indiv.x_var);
+	  SW.load_example("sample_submission.csv", indiv.x_var);
+	  double p = indiv.calculateFitness(indiv.x_var);
   	  cout << p << endl;
 //  	  indiv.iterated_local_search();
 //	  p = indiv.calculateFitness(indiv.x_var);

@@ -12,6 +12,7 @@ class Individual{
 		
 		Individual(SantaWorkshop &SW_){
 		  this->SW= &SW_;
+		  this->domain = SW_.domain;
 		  //initialization....
 		  initialization();
 		  //Load example solution to check the evaluator...
@@ -27,10 +28,10 @@ class Individual{
 		void iterated_local_search();
 		void localSearch();
 
-		long long calculateFitness(vector<int> &x_ind);
-		long long incremental_evaluation();
+		double calculateFitness(vector<int> &x_ind);
+		double incremental_evaluation();
 		void print();
-		long long fitness;
+		double fitness;
 
 		SantaWorkshop *SW;
  		int dist;

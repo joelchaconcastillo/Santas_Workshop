@@ -15,8 +15,12 @@ class SantaWorkshop{
 		SantaWorkshop(string file);
 		~SantaWorkshop(){
 		}
-		void Load(string file);
+		double evaluate(vector<int> &x);
+		void load(string file);
+		void load_example(string file, vector<int> &x);
+   		int N_FAM= 5000, N_OPTIONS=10, MAX_OCCUPANCY = 300, MIN_OCCUPANCY = 125, N_DAYS=100; 
 		vector<vector<int>> domain;
+		vector<int> familiy_size;
 		
 };
 #endif
