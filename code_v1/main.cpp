@@ -12,7 +12,6 @@ int main(int argc, char **argv){
 
 	string file = "Instances/public/family_data.csv";
 
-
 	Santa_Workshop SW(file);
 	//MA ma(N, pc, pm, finalTime, TTP);
 	//ma.run();

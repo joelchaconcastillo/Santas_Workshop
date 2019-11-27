@@ -14,7 +14,7 @@ class Individual{
 		   long long fitness_v;
 		   long long room_penalization_v, time_penalization_v, student_penalization_v, soft_distributions_v, hard_distributions_v;
 		};
-		Individual(TimeTablingProblem &TTP_){
+		Individual(SantaWorkshop &TTP_){
 		  this->TTP= &TTP_;
 		  this->domain = TTP->domain;
 		
@@ -49,8 +49,8 @@ class Individual{
 		pair<long long, long long> incremental_evaluation(vector<int> &classes_to_check, vector<pair<int,int>> &x_ind);
 		void print();
 		long long fitness;
-		//static TimeTablingProblem *TimeTablingproblem;
-		TimeTablingProblem *TTP;
+		//static SantaWorkshop *TimeTablingproblem;
+		SantaWorkshop *TTP;
  		int dist;
 		vector<pair<int, int>> x_var;
 		vector<vector<pair<int,int>>> domain;

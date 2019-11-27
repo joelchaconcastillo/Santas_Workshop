@@ -1,7 +1,7 @@
 #ifndef __MA_H__
 #define __MA_H__
 
-#include "TimeTabling.h"
+#include "SantaKaggle.h"
 #include "Individual.h"
 
 //struct Individual {
