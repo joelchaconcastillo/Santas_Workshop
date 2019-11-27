@@ -7,9 +7,9 @@
 
 using namespace std;
 
-MA::MA(int N_, double pc_, double pm_, double finalTime_, TimeTablingProblem &TTP_){
+MA::MA(int N_, double pc_, double pm_, double finalTime_, SantaWorkshop &SW_){
 	if (N_ % 2){ cerr << "El tam. de poblacion debe ser par" << endl; exit(-1); }
-	this->TTP = &TTP_;
+	this->SW = &SW_;
 	this->N = N_;
 	this->pc = pc_;
 	this->pm = pm_;
@@ -22,7 +22,7 @@ MA::MA(int N_, double pc_, double pm_, double finalTime_, TimeTablingProblem &TT
 void MA::initPopulation(){
 	for (int i = 0; i < N; i++){
 		//cout << "Crea ind " << i << endl;
-		Individual *ei = new Individual(*(this->TTP));
+		Individual *ei = new Individual(*(this->SW));
 		population.push_back(ei);	
 	}
 }
@@ -43,7 +43,7 @@ void MA::selectParents(){
 
 void MA::crossover(){
 	for (int i = 0; i < parents.size(); i++){
-		Individual *ei = new Individual(*(this->TTP));
+		Individual *ei = new Individual(*(this->SW));
 		*ei = *parents[i];
 		offspring.push_back(ei);
 	}

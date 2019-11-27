@@ -1,7 +1,7 @@
 #ifndef __MA_H__
 #define __MA_H__
 
-#include "SantaKaggle.h"
+#include "SantaWorkshop.h"
 #include "Individual.h"
 
 //struct Individual {
@@ -11,7 +11,7 @@
 
 class MA {
 	public:
-		MA(int N_, double pc_, double pm_, double finalTime_, TimeTablingProblem &TTP_);
+		MA(int N_, double pc_, double pm_, double finalTime_, SantaWorkshop &SW_);
 		void run();
 //	private:
 		//Parameters of MA
@@ -35,7 +35,7 @@ class MA {
 		vector< Individual * > offspring;
 		double initialTime;
 		double DI;
-		TimeTablingProblem *TTP;
+		SantaWorkshop *SW;
 	        Individual bestI;
 };
 

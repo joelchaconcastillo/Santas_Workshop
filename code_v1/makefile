@@ -7,7 +7,7 @@ SantaWorkshop.o: SantaWorkshop.h SantaWorkshop.cpp
 Individual.o: Individual.h Individual.cpp
 	g++ -O2 -c -o $@ Individual.cpp -std=c++11
 
-MA.o: MA.h TimeTabling.h MA.cpp
+MA.o: MA.h SantaWorkshop.h MA.cpp
 	g++ -O2 -c -o $@ MA.cpp -std=c++11
 
 utils.o: utils.cpp utils.h

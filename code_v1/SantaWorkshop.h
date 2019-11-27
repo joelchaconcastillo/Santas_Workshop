@@ -16,7 +16,7 @@ class SantaWorkshop{
 		~SantaWorkshop(){
 		}
 		void Load(string file);
-
+		vector<vector<int>> domain;
 		
 };
 #endif

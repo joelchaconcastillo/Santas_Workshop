@@ -1,5 +1,5 @@
 #include <signal.h>
-#include "SantaKaggle.h"
+#include "SantaWorkshop.h"
 #include "Individual.h"
 #include "utils.h"
 using namespace std;
@@ -8,10 +8,11 @@ using namespace std;
 //TimeTablingProblem* TimeTablingProblem::TTP;
 
 long long best = 1e16;
-SantaKaggle::SantaKaggle(string file){
+SantaWorkshop::SantaWorkshop(string file){
   Load(file);
 }
-void SantaKaggle::Load(string file)
+void SantaWorkshop::Load(string file)
 {
+  
 }
 
