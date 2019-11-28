@@ -52,7 +52,9 @@ double SantaWorkshop::evaluate(vector<int> &x)
     {
           int n = familiy_size[i];
 	  int d = x[i];
-	  if( d == 1) penalty += 50;
+	
+	  if( d == 0) penalty += 0;
+	  else if( d == 1) penalty += 50;
 	  else if( d == 2) penalty += 50 + 9 *n;
 	  else if( d == 3) penalty += 100 + 9 *n;
 	  else if( d == 4) penalty += 200 + 9 *n;
@@ -61,16 +63,19 @@ double SantaWorkshop::evaluate(vector<int> &x)
 	  else if( d == 7) penalty += 300 + 36 *n;
 	  else if( d == 8) penalty += 400 + 36 *n;
 	  else if( d == 9) penalty += 500 + 36 *n + 199*n;
-	  else  penalty += 500 + 36 *n + 398*n;
-	  daily_occupancy[d]  +=n;
+	  else penalty += 500 + 36 *n + 398*n;
+	  daily_occupancy[ domain[i][d]  ]  +=n;
 
 	  //using soft constraints instead of hard constraints..
-	  if( !checked[d] && (daily_occupancy[d] > MAX_OCCUPANCY || daily_occupancy[d] < MIN_OCCUPANCY))
-	  {
-	    penalty += 100000000;
-	    checked[d] =true;
-	  }
+	  //if( !checked[d] && (daily_occupancy[d] > MAX_OCCUPANCY || daily_occupancy[d] < MIN_OCCUPANCY))
+	  //{
+	  //  penalty += 100000000;
+	  //  checked[d] =true;
+	  //}
     }
+   for(int d = 0 ; d < N_DAYS; d++)
+	  if( (daily_occupancy[d] > MAX_OCCUPANCY || daily_occupancy[d] < MIN_OCCUPANCY))
+	    penalty += 100000000;
    // accounting penalty
    //first day..
    double accounting_cost = (((daily_occupancy[x[0] - 125.0]))/400.0)*(pow(daily_occupancy[x[0]], 0.5));
