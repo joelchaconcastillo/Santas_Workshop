@@ -33,7 +33,7 @@ void Individual::initialization()
    x_var.resize(domain.size(), 0);
    for(int i = 0; i < domain.size(); i++)
    {
-	x_var[i] = domain[i][rand()%domain[i].size()];
+	x_var[i] = rand()%domain[i].size();
    }
 }
 double Individual::incremental_evaluation()
