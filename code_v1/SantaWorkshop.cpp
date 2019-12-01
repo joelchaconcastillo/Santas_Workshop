@@ -54,20 +54,19 @@ double SantaWorkshop::evaluate(vector<int> &x)
     for(int i = 0; i < x.size(); i++)
     {
           int n = familiy_size[i];
-	  int d = inv_domain[i][x[i]];
+	  int d = x[i];
 	
-	  if( d == 0) penalty += 0.0;
-	  else if( d == 1) penalty += 50.0;
-	  else if( d == 2) penalty += 50.0 + 9.0 *n;
-	  else if( d == 3) penalty += 100.0 + 9.0 *n;
-	  else if( d == 4) penalty += 200.0 + 9.0 *n;
-	  else if( d == 5) penalty += 200.0 + 18.0 *n;
-	  else if( d == 6) penalty += 300.0 + 18.0 *n;
-	  else if( d == 7) penalty += 300.0 + 36.0 *n;
-	  else if( d == 8) penalty += 400.0 + 36.0 *n;
-	  else if( d == 9) penalty += 500.0 + 36.0 *n + 199.0*n;
+	  if( d == domain[i][0]) penalty += 0.0;
+	  else if( d == domain[i][1] ) penalty += 50.0;
+	  else if( d == domain[i][2] ) penalty += 50.0 + 9.0 *n;
+	  else if( d == domain[i][3] ) penalty += 100.0 + 9.0 *n;
+	  else if( d == domain[i][4] ) penalty += 200.0 + 9.0 *n;
+	  else if( d == domain[i][5] ) penalty += 200.0 + 18.0 *n;
+	  else if( d == domain[i][6]) penalty += 300.0 + 18.0 *n;
+	  else if( d == domain[i][7]) penalty += 300.0 + 36.0 *n;
+	  else if( d == domain[i][8]) penalty += 400.0 + 36.0 *n;
+	  else if( d == domain[i][9]) penalty += 500.0 + 36.0 *n + 199.0*n;
 	  else penalty += 500.0 + 36.0*n + 398.0*n;
-	  d = x[i];
 	  daily_occupancy[d] +=n;
     }
    for(int d = 1 ; d <= N_DAYS; d++)
