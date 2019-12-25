@@ -21,6 +21,7 @@ class SantaWorkshop{
    		int N_FAM= 5000, N_OPTIONS=10, MAX_OCCUPANCY = 300, MIN_OCCUPANCY = 125, N_DAYS=100; 
 		vector<vector<int>> domain, inv_domain;
 		vector<int> familiy_size;
+		vector<double> c1, c2, c3;
 		
 };
 #endif

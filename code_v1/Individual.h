@@ -26,11 +26,13 @@ class Individual{
 		void Crossover(Individual &ind);
 
 		void iterated_local_search();
+		void localSearch(vector<int> & original_var, double &f_original);
 		void localSearch();
+		void perturbe(vector<int> &x, int nvar);
 
 		double calculateFitness(vector<int> &x_ind);
 		double incremental_evaluation();
-		void print();
+		void print(vector<int> &sol);
 		double fitness;
 
 		SantaWorkshop *SW;
