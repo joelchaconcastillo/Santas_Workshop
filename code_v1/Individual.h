@@ -26,7 +26,9 @@ class Individual{
 		void Crossover(Individual &ind);
 
 		void iterated_local_search();
-		void localSearch(vector<int> & original_var, double &f_original);
+		void localSearch1(vector<int> & original_var, double &f_original);
+		void localSearch2(vector<int> & original_var, double &f_original);
+		void localSearch3(vector<int> & original_var, double &f_original);
 		void localSearch();
 		void perturbe(vector<int> &x, int nvar);
 

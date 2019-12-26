@@ -33,7 +33,9 @@ void Individual::iterated_local_search()
   int np = 1; 
   while(true)
   {
-     localSearch(current_var, f_current);
+     localSearch1(current_var, f_current);
+     localSearch2(current_var, f_current);
+     localSearch3(current_var, f_current);
      if(f_current < f_best)
      {
         f_best = f_current;
@@ -55,59 +57,65 @@ void Individual::iterated_local_search()
 
 
 }
-//void Individual::localSearch(vector<int> & original_var, double &f_original)
-//{
-//  vector<int> current_var = original_var;
-//  double f_current = f_original;
-//  int N_DAYS =100;
-//  vector<vector<int>> day_var(N_DAYS+1);
-//  for(int i = 0; i < original_var.size(); i++)
-//	day_var[original_var[i]].push_back(i);
-//
-//  int max_ite = 10000, cont = 0;
-//  int r1=1;
-//  while(cont < max_ite )
-//  {
-//    //perturbe(current_var, 1);
-////    int r1 = (rand()%N_DAYS)+1;
-////    while( day_var[r1].empty()) r1 = (rand()%N_DAYS)+1;
-//   
-////    int r11 = rand()%day_var[r1].size();
-//    for(int i =  day_var[r1].size()-1; i>=0; i--)
-//    {
-//	int id_fam = day_var[r1][i];
-//       for(int j = 1; j <=100; j++) 
-//       {
-//         // day_var[r2].push_back(day_var[r1][r11]);    
-//         // iter_swap(day[r1].begin()+r11, dat[r1].end()-1);
-//         // day[r1].pop_back();
-//          current_var[id_fam] = j;
-//           
-//          f_current = calculateFitness(current_var);
-//          if(f_current < f_original)
-//          {
-//           f_original = f_current;
-//           original_var = current_var; 
-//           cout <<"---"  <<f_original <<endl;
-//	   cont = 0;
-//          }
-//          else
-//          { 
-//             current_var = original_var;
-//             //cont++;
-//          }
-//       }
-////	 day_var[original_var[id_fam]].push_back(id_fam);
-////          iter_swap(day_var[r1].begin()+i, day_var[r1].end()-1);
-////	  day_var[r1].pop_back();
-//
-//    }
-//    r1++;
-//             cont++;
-//    r1 = (r1%100)+1;
-//  }
-//}
-void Individual::localSearch(vector<int> & original_var, double &f_original)
+void Individual::localSearch1(vector<int> & original_var, double &f_original)
+{
+  vector<int> current_var = original_var;
+  double f_current = f_original;
+   bool improved = true;
+  vector<int> idx(original_var.size());
+  for(int i = 0 ; i < idx.size(); i++)
+  idx[i]=i;
+  while(improved)
+  { 
+    random_shuffle(idx.begin(), idx.end());
+   improved = false;
+     
+  for(int l = 0; l < original_var.size(); l++)
+  {
+	int i = idx[l];
+     for(int j = 0 ;  j < domain[i].size(); j++)
+     {
+   	vector<int> current_var = original_var;
+  	double f_current = f_original;
+	current_var[i] = domain[i][j];
+	f_current = calculateFitness(current_var);
+	if(f_current< f_original)
+	{
+	  improved = true;
+	  original_var = current_var;
+	  f_original = f_current;
+	  cout << "ls1--" <<f_original <<endl;
+	}
+     }
+  }
+  }
+}
+void Individual::localSearch2(vector<int> & original_var, double &f_original)
+{
+  vector<int> current_var = original_var;
+  double f_current = f_original;
+  int max_ite = 100000, cont = 0;
+  while(cont < max_ite )
+  {
+    perturbe(current_var, 1);
+    f_current = calculateFitness(current_var);
+    if(f_current < f_original)
+    {
+     f_original = f_current;
+     original_var = current_var; 
+     cout <<"-ls 2--"  <<f_original <<endl;
+     cont = 0;
+    }
+    else
+    { 
+       current_var = original_var;
+       cont++;
+    }
+  }
+
+}
+
+void Individual::localSearch3(vector<int> & original_var, double &f_original)
 {
   vector<int> current_var = original_var;
   double f_current = f_original;
@@ -115,21 +123,32 @@ void Individual::localSearch(vector<int> & original_var, double &f_original)
   while(cont < max_ite )
   {
     //perturbe(current_var, 1);
-    int r1 = rand()%current_var.size();
-    int r2 = rand()%current_var.size();
-    iter_swap(current_var.begin()+r1, current_var.begin()+r2);
-    f_current = calculateFitness(current_var);
-    if(f_current < f_original)
+    for(int x1 = 0; x1 < current_var.size(); x1++)
     {
-     f_original = f_current;
-     original_var = current_var; 
-     //cout <<"---"  <<f_original <<endl;
-     cont = 0;
-    }
-    else
-    { 
-       current_var = original_var;
-       cont++;
+      for(int x2 = 0; x2 < current_var.size(); x2++)
+      { 
+       int r1 = x1;//rand()%current_var.size();
+       int r2 = x2;//rand()%current_var.size();
+	if(current_var[x1] == current_var[x2]) continue;
+      // while(current_var[r1] == current_var[r2])
+      // r2 = rand()%current_var.size();
+       iter_swap(current_var.begin()+r1, current_var.begin()+r2);
+
+
+       f_current = calculateFitness(current_var);
+       if(f_current < f_original)
+       {
+        f_original = f_current;
+        original_var = current_var; 
+        cout <<"-ls 3 --"  <<f_original <<endl;
+        cont = 0;
+       }
+       else
+       { 
+          current_var = original_var;
+          cont++;
+       }
+      }
     }
   }
 }
