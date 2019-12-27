@@ -29,7 +29,7 @@ void SantaWorkshop::load(string file)
 {
    FILE *fp = fopen( file.c_str(), "r");
    domain.resize( N_FAM, vector<int> (N_OPTIONS, 0));
-   inv_domain.resize( N_FAM, vector<int> (N_DAYS+1, -1));
+   inv_domain.resize( N_FAM, vector<int> (N_DAYS+1, NOT_OPTION));
 
    familiy_size.resize(N_FAM);
    char tmp[200];
@@ -83,7 +83,62 @@ void SantaWorkshop::load(string file)
    c3[8] = 0.0;
    c3[9] = 199.0;
    c3[10] = 398.0;
+   preference_costs.resize(N_FAM, vector<double> (N_DAYS+1));
+   for(int i = 0; i < N_FAM; i++)
+   {
+      int n = familiy_size[i];
+      for(int  j = 1; j <=N_DAYS; j++)
+      {	
+	int opc = inv_domain[i][j];
+	if(opc!=NOT_OPTION) 
+          preference_costs[i][j] = c1[opc] + c2[opc]*n + c3[opc]*n;
+	else
+          preference_costs[i][j] = 500.0 + 36.0*n + 398.0*n;
+      }
+   }
 
+}
+double SantaWorkshop::partial_accounting_cost(int id_day, vector<int> &daily_occupancy)
+{
+  int id_day_next = min(id_day+1, N_DAYS);
+  double dj1 = daily_occupancy[id_day];
+  double dj2 = daily_occupancy[id_day_next];
+
+  double cost = max(0.0, ((dj1 - 125.0)/400.0)*(pow(dj1, 0.5 + (fabs(dj1-dj2)/50.0) )));
+
+  if(id_day <= 1) return cost;
+  id_day--;
+  id_day_next = min(id_day+1, N_DAYS);
+  dj1 = daily_occupancy[id_day];
+  dj2 = daily_occupancy[id_day_next];
+  cost += max(0.0, ((dj1 - 125.0)/400.0)*(pow(dj1, 0.5 + (fabs(dj1-dj2)/50.0) )));
+// cout << "-----> "<<dj1 << " " <<dj2<<endl;
+  return cost;
+}
+double SantaWorkshop::incremental_evaluation(vector<int> &x, int fam_i, int fam_j, vector<int> &daily_occupancy)
+{
+   int day_a = x[fam_i];
+   int day_b = x[fam_j];
+   double total_preference_cost = preference_costs[fam_i][day_a] + preference_costs[fam_j][day_b]  - preference_costs[fam_i][day_b] - preference_costs[fam_j][day_a];
+
+
+   double cost_Ni1 =  partial_accounting_cost(day_a, daily_occupancy);
+   double cost_Nj1 =  partial_accounting_cost(day_b, daily_occupancy);
+   //temporal update of daily..
+   daily_occupancy[day_a] += (- familiy_size[fam_i] + familiy_size[fam_j]);
+   daily_occupancy[day_b] += (- familiy_size[fam_j] + familiy_size[fam_i]);
+
+   double cost_Ni2 =  partial_accounting_cost(day_a, daily_occupancy);
+   double cost_Nj2 =  partial_accounting_cost(day_b, daily_occupancy);
+ cout << cost_Ni1 << " "<<cost_Nj1 << " "<<cost_Ni2 << " "<<cost_Nj2 <<endl; 
+
+  ///get back original values..
+   daily_occupancy[day_a] += familiy_size[fam_i] - familiy_size[fam_j];
+   daily_occupancy[day_b] += familiy_size[fam_j] - familiy_size[fam_i];
+
+   double total_accounting_cost = cost_Ni1 + cost_Nj1 - cost_Ni2 - cost_Nj2;
+
+   return total_preference_cost+total_accounting_cost;
 }
 double SantaWorkshop::evaluate(vector<int> &x)
 {
@@ -94,14 +149,15 @@ double SantaWorkshop::evaluate(vector<int> &x)
     {
           int n = familiy_size[i];
 	  int d = x[i];
-	  bool updated = false;
-	  for(int j = 0; j < 10; j++)
-	    if( d == domain[i][j])
-	    {
-		 updated = true;
-		 penalty += c1[j] + c2[j]*n + c3[j]*n;
-	    }
-	  if(!updated)penalty += 500.0 + 36.0*n + 398.0*n;
+	  penalty += preference_costs[i][d];
+//	  bool updated = false;
+//	  for(int j = 0; j < 10; j++)
+//	    if( d == domain[i][j])
+//	    {
+//		 updated = true;
+//		 penalty += c1[j] + c2[j]*n + c3[j]*n;
+//	    }
+//	  if(!updated)penalty += 500.0 + 36.0*n + 398.0*n;
 
 //	  if( d == domain[i][0]) penalty += 0.0;
 //	  else if( d == domain[i][1] ) penalty += 50.0;
