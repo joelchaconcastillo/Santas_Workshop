@@ -33,8 +33,8 @@ void Individual::iterated_local_search()
   int np = 1; 
   while(true)
   {
-     localSearch1(current_var, f_current);
-     localSearch2(current_var, f_current);
+//     localSearch1(current_var, f_current);
+//     localSearch2(current_var, f_current);
      localSearch3(current_var, f_current);
      if(f_current < f_best)
      {
@@ -52,7 +52,7 @@ void Individual::iterated_local_search()
      perturbe(current_var, np);
      f_current = calculateFitness(current_var);
      cout << f_best <<endl;
-     print(best_var);
+  //   print(best_var);
   }
 
 
@@ -117,39 +117,44 @@ void Individual::localSearch2(vector<int> & original_var, double &f_original)
 
 void Individual::localSearch3(vector<int> & original_var, double &f_original)
 {
+  int N_DAYS = 100;
+  vector<int> familiy_size = SW->familiy_size;
   vector<int> current_var = original_var;
+  vector<int> daily_occupancy(N_DAYS+1,0);
+  for(int i = 0 ; i < current_var.size(); i++)
+    daily_occupancy[current_var[i]]+= SW->familiy_size[i];
+
   double f_current = f_original;
   int max_ite = 100000, cont = 0;
-  while(cont < max_ite )
+  bool improved = true;
+  while(improved)
   {
+	improved =false;
     //perturbe(current_var, 1);
     for(int x1 = 0; x1 < current_var.size(); x1++)
     {
       for(int x2 = 0; x2 < current_var.size(); x2++)
       { 
-       int r1 = x1;//rand()%current_var.size();
-       int r2 = x2;//rand()%current_var.size();
-	if(current_var[x1] == current_var[x2]) continue;
-      // while(current_var[r1] == current_var[r2])
-      // r2 = rand()%current_var.size();
-       iter_swap(current_var.begin()+r1, current_var.begin()+r2);
-
-
-       f_current = calculateFitness(current_var);
-       if(f_current < f_original)
+	if(x1==x2) continue;
+	if( SW->familiy_size[x1] != SW->familiy_size[x2])continue;
+      
+        double value = SW->incremental_evaluation(current_var, x1, x2, daily_occupancy);
+       if(value  > 0)
        {
-        f_original = f_current;
+        int day_a = current_var[x1], day_b = current_var[x2];
+	daily_occupancy[day_a] = daily_occupancy[day_a] - familiy_size[x1] + familiy_size[x2];
+        daily_occupancy[day_b] = daily_occupancy[day_b] - familiy_size[x2] + familiy_size[x1];
+
+	iter_swap(current_var.begin()+x1, current_var.begin()+x2);
+	cout << calculateFitness(current_var)<<endl;
+	improved = true;
+        f_original = calculateFitness(current_var);
         original_var = current_var; 
-        cout <<"-ls 3 --"  <<f_original <<endl;
-        cont = 0;
        }
-       else
-       { 
-          current_var = original_var;
-          cont++;
-       }
+
       }
     }
+	cout << "----------"<<endl;
   }
 }
 
