@@ -96,23 +96,29 @@ void SantaWorkshop::load(string file)
           preference_costs[i][j] = 500.0 + 36.0*n + 398.0*n;
       }
    }
-
+  accounty_penalty.resize(MAX_OCCUPANCY+1, vector<double> (MAX_OCCUPANCY+1, 1e6));
+  for(int i = MIN_OCCUPANCY-1; i <= MAX_OCCUPANCY; i++)
+  {
+    for(int diff =0; diff <= MAX_OCCUPANCY-MIN_OCCUPANCY+1; diff++)
+     accounty_penalty[i][diff] = max(0.0, ((i - 125.0)/400.0)*(pow(i, 0.5 + (diff/50.0) )));
+  }
 }
 double SantaWorkshop::partial_accounting_cost(int id_day, vector<int> &daily_occupancy)
 {
   int id_day_next = min(id_day+1, N_DAYS);
-  double dj1 = daily_occupancy[id_day];
-  double dj2 = daily_occupancy[id_day_next];
+  int diff = fabs( daily_occupancy[id_day] - daily_occupancy[id_day_next] );
 
-  double cost = max(0.0, ((dj1 - 125.0)/400.0)*(pow(dj1, 0.5 + (fabs(dj1-dj2)/50.0) )));
+  double cost = max(0.0, ((daily_occupancy[id_day] - 125.0)/400.0)*(pow(daily_occupancy[id_day], 0.5 + (diff/50.0) )));
+   //if( daily_occupancy[id_day] <MIN_OCCUPANCY ||  daily_occupancy[id_day] >MAX_OCCUPANCY) cost+=1e5;
+   if( daily_occupancy[id_day] < min_occupancy ||  daily_occupancy[id_day] >max_occupancy) cost+=1e5;
+//  double cost = accounty_penalty[daily_occupancy[id_day] ][diff];
 
   if(id_day <= 1) return cost;
   id_day--;
-  id_day_next = min(id_day+1, N_DAYS);
-  dj1 = daily_occupancy[id_day];
-  dj2 = daily_occupancy[id_day_next];
-  cost += max(0.0, ((dj1 - 125.0)/400.0)*(pow(dj1, 0.5 + (fabs(dj1-dj2)/50.0) )));
-// cout << "-----> "<<dj1 << " " <<dj2<<endl;
+  id_day_next =id_day+1;
+  diff = fabs( daily_occupancy[id_day] - daily_occupancy[id_day_next] );
+  cost += max(0.0, ((daily_occupancy[id_day] - 125.0)/400.0)*(pow(daily_occupancy[id_day], 0.5 + (diff/50.0) )));
+//  cost += accounty_penalty[ daily_occupancy[id_day] ][diff];
   return cost;
 }
 double SantaWorkshop::incremental_evaluation(vector<int> &x, int fam_i, int fam_j, vector<int> &daily_occupancy)
@@ -121,20 +127,24 @@ double SantaWorkshop::incremental_evaluation(vector<int> &x, int fam_i, int fam_
    int day_b = x[fam_j];
    double total_preference_cost = preference_costs[fam_i][day_a] + preference_costs[fam_j][day_b]  - preference_costs[fam_i][day_b] - preference_costs[fam_j][day_a];
 
+   int new_ocup_a = daily_occupancy[day_a] - familiy_size[fam_i] + familiy_size[fam_j];
+   int new_ocup_b = daily_occupancy[day_b] + familiy_size[fam_i] - familiy_size[fam_j];
+
+
 
    double cost_Ni1 =  partial_accounting_cost(day_a, daily_occupancy);
    double cost_Nj1 =  partial_accounting_cost(day_b, daily_occupancy);
    //temporal update of daily..
-   daily_occupancy[day_a] += (- familiy_size[fam_i] + familiy_size[fam_j]);
-   daily_occupancy[day_b] += (- familiy_size[fam_j] + familiy_size[fam_i]);
+   daily_occupancy[day_a] = new_ocup_a;//+ (- familiy_size[fam_i] + familiy_size[fam_j]);
+   daily_occupancy[day_b] = new_ocup_b;//+= (- familiy_size[fam_j] + familiy_size[fam_i]);
 
    double cost_Ni2 =  partial_accounting_cost(day_a, daily_occupancy);
    double cost_Nj2 =  partial_accounting_cost(day_b, daily_occupancy);
- cout << cost_Ni1 << " "<<cost_Nj1 << " "<<cost_Ni2 << " "<<cost_Nj2 <<endl; 
+// cout << cost_Ni1 << " "<<cost_Nj1 << " "<<cost_Ni2 << " "<<cost_Nj2 <<endl; 
 
   ///get back original values..
-   daily_occupancy[day_a] += familiy_size[fam_i] - familiy_size[fam_j];
-   daily_occupancy[day_b] += familiy_size[fam_j] - familiy_size[fam_i];
+   daily_occupancy[day_a] += (familiy_size[fam_i] - familiy_size[fam_j]);
+   daily_occupancy[day_b] += (familiy_size[fam_j] - familiy_size[fam_i]);
 
    double total_accounting_cost = cost_Ni1 + cost_Nj1 - cost_Ni2 - cost_Nj2;
 
@@ -184,6 +194,16 @@ double SantaWorkshop::evaluate(vector<int> &x)
       double diff =  fabs(daily_occupancy[i] - daily_occupancy[i+1]);
       accounting_cost += max(0.0, ((daily_occupancy[i] - 125.0)/400.0)*(pow(daily_occupancy[i], 0.5 + (diff/50.0) )));
    }
+//   double accounting_cost = 0.0;//((daily_occupancy[100] - 125.0)/400.0)*(pow(daily_occupancy[100], 0.5));
+//   accounting_cost = max(0.0, accounting_cost);
+//   for(int i = 1; i <= N_DAYS; i++)
+//   {
+//      int diff = 0;
+//      if(i< N_DAYS)  diff = fabs(daily_occupancy[i] - daily_occupancy[i+1]);
+//      if(diff < accounty_penalty[0].size())
+//      accounting_cost += accounty_penalty[daily_occupancy[i]][diff];// max(0.0, ((daily_occupancy[i] - 125.0)/400.0)*(pow(daily_occupancy[i], 0.5 + (diff/50.0) )));
+//   }
+
    penalty += accounting_cost; 
    return penalty;
 }

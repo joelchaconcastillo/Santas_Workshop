@@ -21,11 +21,11 @@ class SantaWorkshop{
 		double partial_accounting_cost(int id_day, vector<int> &daily_occupancy);
 		void load(string file);
 		void load_example(string file, vector<int> &x);
-   		int N_FAM= 5000, N_OPTIONS=10, MAX_OCCUPANCY = 300, MIN_OCCUPANCY = 125, N_DAYS=100; 
+   		int N_FAM= 5000, N_OPTIONS=10, MAX_OCCUPANCY = 300, MIN_OCCUPANCY = 125, N_DAYS=100, max_occupancy, min_occupancy; 
 		vector<vector<int>> domain, inv_domain;
 		vector<int> familiy_size;
 		vector<double> c1, c2, c3;
-	        vector< vector<double> > preference_costs;
+	        vector< vector<double> > preference_costs, accounty_penalty;
 		
 };
 #endif

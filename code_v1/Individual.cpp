@@ -31,11 +31,19 @@ void Individual::iterated_local_search()
   double f_best = calculateFitness(x_var);
   double f_current = calculateFitness(x_var);
   int np = 1; 
+  SW->max_occupancy = SW->MAX_OCCUPANCY; 
+  SW->min_occupancy = SW->MIN_OCCUPANCY; 
   while(true)
   {
-//     localSearch1(current_var, f_current);
+cout << "a1: "<< calculateFitness(current_var) <<endl;
+     double in = f_current;
+     localSearch1(current_var, f_current);
 //     localSearch2(current_var, f_current);
+//cout << "a2: "<< calculateFitness(current_var) <<endl;
      localSearch3(current_var, f_current);
+     if(in > f_current) continue;
+//cout << "a3: "<< calculateFitness(current_var) <<endl;
+	//exit(0);
      if(f_current < f_best)
      {
         f_best = f_current;
@@ -47,15 +55,19 @@ void Individual::iterated_local_search()
        current_var = best_var;
        f_current = f_best;
 	np++;
-        np = max(np, 2);
+        np = max(np, 10);
      }
-     perturbe(current_var, np);
+//     SW->max_occupancy = SW->MAX_OCCUPANCY + 10; 
+//     SW->min_occupancy = SW->MIN_OCCUPANCY - 10; 
+//     localSearch2(current_var, f_current);
+//  SW->max_occupancy = SW->MAX_OCCUPANCY; 
+//  SW->min_occupancy = SW->MIN_OCCUPANCY; 
+
+     perturbe(current_var, 1);
      f_current = calculateFitness(current_var);
      cout << f_best <<endl;
-  //   print(best_var);
+     print(best_var);
   }
-
-
 }
 void Individual::localSearch1(vector<int> & original_var, double &f_original)
 {
@@ -67,7 +79,7 @@ void Individual::localSearch1(vector<int> & original_var, double &f_original)
   idx[i]=i;
   while(improved)
   { 
-    random_shuffle(idx.begin(), idx.end());
+    //random_shuffle(idx.begin(), idx.end());
    improved = false;
      
   for(int l = 0; l < original_var.size(); l++)
@@ -84,43 +96,21 @@ void Individual::localSearch1(vector<int> & original_var, double &f_original)
 	  improved = true;
 	  original_var = current_var;
 	  f_original = f_current;
-	  cout << "ls1--" <<f_original <<endl;
 	}
      }
   }
   }
+
+	  //cout << "ls1--" <<f_original <<endl;
 }
 void Individual::localSearch2(vector<int> & original_var, double &f_original)
 {
-  vector<int> current_var = original_var;
-  double f_current = f_original;
-  int max_ite = 100000, cont = 0;
-  while(cont < max_ite )
-  {
-    perturbe(current_var, 1);
-    f_current = calculateFitness(current_var);
-    if(f_current < f_original)
-    {
-     f_original = f_current;
-     original_var = current_var; 
-     cout <<"-ls 2--"  <<f_original <<endl;
-     cont = 0;
-    }
-    else
-    { 
-       current_var = original_var;
-       cont++;
-    }
-  }
 
-}
-
-void Individual::localSearch3(vector<int> & original_var, double &f_original)
-{
   int N_DAYS = 100;
   vector<int> familiy_size = SW->familiy_size;
   vector<int> current_var = original_var;
   vector<int> daily_occupancy(N_DAYS+1,0);
+
   for(int i = 0 ; i < current_var.size(); i++)
     daily_occupancy[current_var[i]]+= SW->familiy_size[i];
 
@@ -130,23 +120,69 @@ void Individual::localSearch3(vector<int> & original_var, double &f_original)
   while(improved)
   {
 	improved =false;
-    //perturbe(current_var, 1);
-    for(int x1 = 0; x1 < current_var.size(); x1++)
+    while(cont < 200)
     {
-      for(int x2 = 0; x2 < current_var.size(); x2++)
-      { 
-	if(x1==x2) continue;
-	if( SW->familiy_size[x1] != SW->familiy_size[x2])continue;
-      
+    //perturbe(current_var, 1);
+	int x1 = rand()%current_var.size();
+	int x2 = rand()%current_var.size();
+       if(x1==x2 || current_var[x1] == current_var[x2]) continue; //same fam or day..
         double value = SW->incremental_evaluation(current_var, x1, x2, daily_occupancy);
-       if(value  > 0)
+       if(value-0.001  > 0.0)
        {
         int day_a = current_var[x1], day_b = current_var[x2];
 	daily_occupancy[day_a] = daily_occupancy[day_a] - familiy_size[x1] + familiy_size[x2];
         daily_occupancy[day_b] = daily_occupancy[day_b] - familiy_size[x2] + familiy_size[x1];
 
 	iter_swap(current_var.begin()+x1, current_var.begin()+x2);
-	cout << calculateFitness(current_var)<<endl;
+	improved = true;
+        f_original = calculateFitness(current_var);
+        original_var = current_var; 
+	cont = 0;
+       }
+	else cont++;
+    }
+
+  }
+	//cout << calculateFitness(original_var)<<endl;
+
+}
+
+void Individual::localSearch3(vector<int> & original_var, double &f_original)
+{
+  int N_DAYS = 100;
+  vector<int> familiy_size = SW->familiy_size;
+  vector<int> current_var = original_var;
+  vector<int> daily_occupancy(N_DAYS+1,0);
+  vector<int> perm;
+  for(int i = 0 ; i < current_var.size(); i++)
+  {
+    daily_occupancy[current_var[i]]+= SW->familiy_size[i];
+   perm.push_back(i);
+  }
+
+  double f_current = f_original;
+  int max_ite = 100000, cont = 0;
+  bool improved = true;
+  while(improved)
+  {
+	improved =false;
+    random_shuffle(perm.begin(), perm.end());
+    //perturbe(current_var, 1);
+    for(int i = 0; i < current_var.size(); i++)
+    {
+	int x1 = perm[i];
+      for(int j = 0; j < current_var.size(); j++)
+      { 
+	int x2 = perm[j];
+	if(x1==x2 || current_var[x1] == current_var[x2]) continue; //same fam or day..
+        double value = SW->incremental_evaluation(current_var, x1, x2, daily_occupancy);
+       if(value-0.001  > 0.0)
+       {
+        int day_a = current_var[x1], day_b = current_var[x2];
+	daily_occupancy[day_a] = daily_occupancy[day_a] - familiy_size[x1] + familiy_size[x2];
+        daily_occupancy[day_b] = daily_occupancy[day_b] - familiy_size[x2] + familiy_size[x1];
+
+	iter_swap(current_var.begin()+x1, current_var.begin()+x2);
 	improved = true;
         f_original = calculateFitness(current_var);
         original_var = current_var; 
@@ -154,8 +190,8 @@ void Individual::localSearch3(vector<int> & original_var, double &f_original)
 
       }
     }
-	cout << "----------"<<endl;
   }
+	//cout << calculateFitness(original_var)<<endl;
 }
 
 void Individual::localSearch()
