@@ -35,7 +35,7 @@ void Individual::iterated_local_search()
   SW->min_occupancy = SW->MIN_OCCUPANCY; 
   while(true)
   {
-cout << "a1: "<< calculateFitness(current_var) <<endl;
+//cout << "a1: "<< calculateFitness(current_var) <<endl;
      double in = f_current;
      localSearch1(current_var, f_current);
 //     localSearch2(current_var, f_current);
