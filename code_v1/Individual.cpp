@@ -57,6 +57,8 @@ cout << "a3: "<< calculateFitness(current_var) <<endl;
 	cout << f_current <<endl;
         f_best = f_current;
         best_var = current_var;
+
+     print(best_var);
 	np=1;
      }
      else
@@ -73,7 +75,6 @@ cout << "a3: "<< calculateFitness(current_var) <<endl;
      perturbe(current_var, 2);
      f_current = calculateFitness(current_var);
      cout << f_best <<endl;
-     print(best_var);
   }
 }
 void Individual::localSearch1(vector<int> & original_var, double &f_original)
