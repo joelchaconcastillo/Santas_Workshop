@@ -12,6 +12,28 @@ void printBest(){
 	
 }
 
+///int Individual::DP(int id_fam, int current_cost, vector<vector<int> > &T, vector<int> &xx)
+///{
+///   if(id_fam==5000)
+///   {
+///	return current_cost;
+///   }
+///   int mincost = INT_MAX;
+///   int minindex = -1;
+///   if(T[id_fam][current_cost] != -1) return ;//T[id_fam][current_cost];
+///   for(int i = 1; i <=100; i++)
+///   {
+///	int cost = SW->preference_costs[id_fam][i] ;
+///  	if(mincost > cost + current_cost) 
+///        {
+///           DP(id_fam+1, cost+current_cost, T, xx);	
+///	   minindex = i;
+///        }
+///   } 
+/////	cout << current_cost << "  " << id_fam<<endl;
+///  // xx[id_fam] =  domain[id_fam][minindex];
+///   return T[id_fam][current_cost] = mincost;
+///}
 void Individual::perturbe(vector<int> &x, int times)
 {
  for(int i = 0; i < times; i++)
@@ -42,6 +64,10 @@ void Individual::iterated_local_search()
   while(true)
   {
 cout << "a1: "<< calculateFitness(current_var) <<endl;
+//	vector<vector<int>>t(50001, vector<int>(400*8,-1));
+//	DP(0,0,t, current_var);
+cout << "a1: "<< calculateFitness(current_var) <<endl;
+	exit(0);
      double in = f_current;
      localSearch1(current_var, f_current);
 //     localSearch2(current_var, f_current);
