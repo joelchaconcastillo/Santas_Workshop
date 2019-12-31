@@ -24,6 +24,7 @@ class Individual{
 		int getDistance(Individual &ind);
 		void Mutation(double pm);
 		void Crossover(Individual &ind);
+		void DP(int id_fam, int current_cost, vector<vector<int> > &T, vector<int> &xx);
 
 		void iterated_local_search();
 		void localSearch1(vector<int> & original_var, double &f_original);
