@@ -46,7 +46,7 @@ cout << "a1: "<< calculateFitness(current_var) <<endl;
      localSearch1(current_var, f_current);
 //     localSearch2(current_var, f_current);
 cout << "a2: "<< calculateFitness(current_var) <<endl;
-//     localSearch3(current_var, f_current);
+     localSearch3(current_var, f_current);
      if(in > f_current) continue;
 cout << "a3: "<< calculateFitness(current_var) <<endl;
 	//exit(0);
