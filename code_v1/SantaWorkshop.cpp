@@ -45,49 +45,15 @@ void SantaWorkshop::load(string file)
      }
     fscanf(fp, "%d\n", &(familiy_size[id]));
    }
-   c1.resize(11);
-   c1[0] = 0.0;
-   c1[1] = 50.0;
-   c1[2] = 50.0;
-   c1[3] = 100.0;
-   c1[4] = 200.0;
-   c1[5] = 200.0;
-   c1[6] = 300.0;
-   c1[7] = 300.0;
-   c1[8] = 400.0;
-   c1[9] = 500.0;
-   c1[10] = 500.0;
+   double c1[] = {0.0, 50.0, 50.0, 100.0, 200.0, 200.0, 300.0, 300.0, 400.0, 500.0, 500.0};
+   double c2[] = {0.0, 0.0, 9.0, 9.0, 9.0, 18.0, 18.0, 36.0, 36.0, 36.0, 36.0};
+   double c3[] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 199.0, 398.0};
 
-   c2.resize(11);
-   c2[0] = 0.0;
-   c2[1] = 0.0;
-   c2[2] = 9.0;
-   c2[3] = 9.0;
-   c2[4] = 9.0;
-   c2[5] = 18.0;
-   c2[6] = 18.0;
-   c2[7] = 36.0;
-   c2[8] = 36.0;
-   c2[9] = 36.0;
-   c2[10] = 36.0;
-
-   c3.resize(11);
-   c3[0] = 0.0;
-   c3[1] = 0.0;
-   c3[2] = 0.0;
-   c3[3] = 0.0;
-   c3[4] = 0.0;
-   c3[5] = 0.0;
-   c3[6] = 0.0;
-   c3[7] = 0.0;
-   c3[8] = 0.0;
-   c3[9] = 199.0;
-   c3[10] = 398.0;
    preference_costs.resize(N_FAM, vector<double> (N_DAYS+1));
    for(int i = 0; i < N_FAM; i++)
    {
       int n = familiy_size[i];
-      for(int  j = 1; j <=N_DAYS; j++)
+      for(int  j = 0; j < N_DAYS; j++)
       {	
 	int opc = inv_domain[i][j];
 	if(opc!=NOT_OPTION) 
@@ -96,7 +62,9 @@ void SantaWorkshop::load(string file)
           preference_costs[i][j] = 500.0 + 36.0*n + 398.0*n;
       }
    }
+
   accounty_penalty.resize(MAX_OCCUPANCY+1, vector<double> (MAX_OCCUPANCY+1, 1e6));
+
   for(int i = MIN_OCCUPANCY-1; i <= MAX_OCCUPANCY; i++)
   {
     for(int diff =0; diff <= MAX_OCCUPANCY-MIN_OCCUPANCY+1; diff++)

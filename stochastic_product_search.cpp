@@ -23,9 +23,9 @@ array<array<uint16_t, 10>, 5000> PCOSTM;
 array<array<double, 176>, 176> ACOSTM;
 
 void init_data() {
-    ifstream in("../input/santa-workshop-tour-2019/family_data.csv");
+    ifstream in("code_v1/Instances/public/family_data.csv");
     
-    assert(in && "family_data.csv");
+    assert(in && "code_v1/Instances/public/family_data.csv");
     string header;
     int n,x;
     char comma;
@@ -51,7 +51,7 @@ void init_data() {
 }
 array<uint8_t, 5000> read_submission(string filename) {
     ifstream in(filename);
-    assert(in && "submission.csv");
+    assert(in && "o");
     array<uint8_t, 5000> assigned_day{};
     string header;
     int id, x;
@@ -185,6 +185,8 @@ void stochastic_product_search(Index index, ExitFunction fn) { // 15'360'000it/s
                 }
             }
         }
+
+        cout << best_local_score <<endl;
         if (found_better) { // reindex from N best if found better
             index.reindex(best_indices, best_change);
 //            save_sub(index.assigned_days);
@@ -197,7 +199,7 @@ void stochastic_product_search(Index index, ExitFunction fn) { // 15'360'000it/s
 
 int main() {
     init_data();
-    auto assigned_day = read_submission("../input/another-pytorch-implementation/submission.csv");
+    auto assigned_day = read_submission("o");
 
     Index index(assigned_day);
     calc(index.assigned_days, true);
