@@ -24,33 +24,33 @@ void Individual::subspace_local_search()
   int max_size_feasible_solutions = 1000;
   while(true)
   { 
-//     for(int ite = 0; ite < N_training; ite++)
-//     {
-//	//pickup an index famility combination...<--- fam_perm
-//	random_shuffle(fam_perm.begin(), fam_perm.end());
-//        //check the feasible solutions... <--- partial_solution
-//        vector<vector<int>> feasible_subspace = branch_in_feasible_space(original, fam_perm, max_size_feasible_solutions);
-//	bool improved = false;
-//        for(int i = 0; i < feasible_subspace.size(); i++)
-//        {	
-//	   double score = SW->incremental_evaluation(original, fam_perm, feasible_subspace[i], daily_occupancy);
-//  	   if(score < best_score)
-//	   {
-//		best_score = score;
-//		best_partial_solution = feasible_subspace[i];
-//		improved = true;
-//	   }
-// 	}
-//     }
+     for(int ite = 0; ite < N_training; ite++)
+     {
+	//pickup an index famility combination...<--- fam_perm
+	random_shuffle(fam_perm.begin(), fam_perm.end());
+        //check the feasible solutions... <--- partial_solution
+        vector<vector<pair<int, int>>> feasible_subspace = branch_in_feasible_space(original, fam_perm, max_size_feasible_solutions);
+	bool improved = false;
+        for(int i = 0; i < feasible_subspace.size(); i++)
+        {	
+	   double score = SW->incremental_evaluation(original, fam_perm, feasible_subspace[i], daily_occupancy);
+  	   if(score < best_score)
+	   {
+		best_score = score;
+		best_partial_solution = feasible_subspace[i];
+		improved = true;
+	   }
+ 	}
+     }
 
-//     if(improved) //the solution is improved in the training part..
-//     {
-//         for(int i = 0 ; i < best_partial_solution.size(); i++)
-//         {
-//
-//         }
-//         improved = false;
-//     }
+     if(improved) //the solution is improved in the training part..
+     {
+         for(int i = 0 ; i < best_partial_solution.size(); i++)
+         {
+
+         }
+         improved = false;
+     }
   }
 //  x_var = original;
 //  fitness = score;

@@ -30,6 +30,6 @@ class SantaWorkshop{
 		vector<int> familiy_size;
 		vector<double> c1, c2, c3;
 	        vector< vector<double> > preference_costs, accounting_costs;
-		vector< vector<int> > table_permutations;
+		vector< vector<pair<int, int> > > table_permutations;
 };
 #endif

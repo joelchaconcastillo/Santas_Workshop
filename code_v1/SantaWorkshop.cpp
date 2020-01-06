@@ -8,7 +8,7 @@ using namespace std;
 long long best = 1e16;
 SantaWorkshop::SantaWorkshop(string file){
   load(file);
-  init_table_permutations(10);  
+  init_table_permutations(7);  
 }
 void SantaWorkshop::load_example(string file, vector<int> &x_var)
 {
@@ -57,18 +57,17 @@ void SantaWorkshop::load(string file)
       for(int  j = 0; j < N_DAYS; j++)
       {	
 	int opc = inv_domain[i][j];
-	if(opc!=NOT_OPTION) 
+	if(opc==NOT_OPTION) 
           preference_costs[i][j] = 500.0 + 36.0*n + 398.0*n;
 	else
           preference_costs[i][j] = c1[opc] + c2[opc]*n + c3[opc]*n;
       }
    }
-
   accounting_costs.resize(MAX_OCCUPANCY-MIN_OCCUPANCY+1, vector<double> (MAX_OCCUPANCY-MIN_OCCUPANCY+1, 1e6));
 
-  for(int i = 0; i <= MAX_OCCUPANCY-MIN_OCCUPANCY+1; i++)
+  for(int i = 0; i < MAX_OCCUPANCY-MIN_OCCUPANCY+1; i++)
   {
-    for(int j=0; j <= MAX_OCCUPANCY-MIN_OCCUPANCY+1; j++)
+    for(int j = 0; j < MAX_OCCUPANCY-MIN_OCCUPANCY+1; j++)
      accounting_costs[i][j] =  (i/400.0)*(pow(i+125, 0.5 + (abs(i-j)/50.0)));
   }
 }
@@ -153,19 +152,26 @@ double SantaWorkshop::evaluate(vector<int> &x, vector<int> &daily_occupancy)
 void SantaWorkshop::init_table_permutations(int max_subspace_size)
 {
    vector<int> row_perm(max_subspace_size, NOT_CHECK);
-   vector<int> branch_1(max_subspace_size, 10); // limit the feasible space of each permutation if it is necessary
-   return;
-   while(row_perm[max_subspace_size-1]< branch_1[max_subspace_size-1] && row_perm[0]< branch_1[0] )
+   vector<int> branch_1(max_subspace_size, 9); // limit the feasible space of each permutation if it is necessary
+   int cont_nines = 0;
+   while(cont_nines < max_subspace_size)
    {
+      cont_nines = 0 ;
+      vector<pair<int, int>> sparse_row;
+      for(int i = 0; i < row_perm.size(); i++)
+      if(row_perm[i] != NOT_CHECK) sparse_row.push_back(make_pair(i, row_perm[i]));
+      table_permutations.push_back(sparse_row); 
+
       row_perm[0]++;     
-      table_permutations.push_back(row_perm); 
       for(int col = 0; col < row_perm.size()-1; col++) //check all cols in range..
       {
 	if(row_perm[col] > branch_1[col])
 	{
+	 if(row_perm[col] >= branch_1[col]) cont_nines++;
 	  row_perm[col] = NOT_CHECK;
 	  row_perm[col+1]++;
 	}
       }
+      if(row_perm[max_subspace_size-1] > branch_1[max_subspace_size-1]) cont_nines++;
    }  
 }
