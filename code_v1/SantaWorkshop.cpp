@@ -8,7 +8,7 @@ using namespace std;
 long long best = 1e16;
 SantaWorkshop::SantaWorkshop(string file){
   load(file);
-  
+  init_table_permutations(10);  
 }
 void SantaWorkshop::load_example(string file, vector<int> &x_var)
 {
@@ -72,19 +72,20 @@ void SantaWorkshop::load(string file)
      accounting_costs[i][j] =  (i/400.0)*(pow(i+125, 0.5 + (abs(i-j)/50.0)));
   }
 }
-double SantaWorkshop::incremental_evaluation(vector<int> &X, vector<int> &indices, vector<int> &daily_occupancy, vector<int> &change)
+double SantaWorkshop::incremental_evaluation(vector<int> &current_solution, vector<int> &id_families, vector<int> &proposed_day, vector<int> &daily_occupancy)
 {
      double preference_penalty = 0.0, accounting_penalty = 0.0;
     //preference penalty...
-    for(int i = 0; i < indices.size(); i++)
+    for(int i = 0; i < id_families.size(); i++)
     {
-	  int id_fam_i = indices[i], id_fam_j = change[i];
-	  daily_occupancy[x[id_fam_i]] -= familiy_size[id_fam_i];
-	  daily_occupancy[x[id_fam_j]] += familiy_size[id_fam_j];
-	  preference_penalty+= preference_costs[i][x[i]];
+	  int id_fam = id_families[i];
+	  int day_out = current_solution[id_fam], day_in = proposed_day[i];
+	  daily_occupancy[day_out] -= familiy_size[id_fam];
+	  daily_occupancy[day_in] += familiy_size[id_fam];
+	  preference_penalty +=  preference_costs[id_fam][day_out] - preference_costs[id_fam][day_in];
     }
 
-   for(int d = 0 ; d < N_DAYS; d++) //it ould be a sum instead..
+   for(int d = 0 ; d < N_DAYS; d++) //instead it could be a sum..
    {
 	  if(daily_occupancy[d] > MAX_OCCUPANCY)
 		return 1e12*(daily_occupancy[d]-MAX_OCCUPANCY);
@@ -93,7 +94,7 @@ double SantaWorkshop::incremental_evaluation(vector<int> &X, vector<int> &indice
    }
    // accounting penalty
    for(int i = 0; i < 99; i++)
-      accounting_penalty+=  accounting_costs[daily_occupancy[i]-125][daily_occupancy[i+1]-125];
+      accounting_penalty +=  accounting_costs[daily_occupancy[i]-125][daily_occupancy[i+1]-125];
     accounting_penalty +=  accounting_costs[daily_occupancy[99]-125][daily_occupancy[99]-125];
 
    return accounting_penalty + preference_penalty;  
@@ -122,4 +123,49 @@ double SantaWorkshop::evaluate(vector<int> &x)
     accounting_penalty +=  accounting_costs[daily_occupancy[99]-125][daily_occupancy[99]-125];
 
    return accounting_penalty + preference_penalty;
+}
+
+double SantaWorkshop::evaluate(vector<int> &x, vector<int> &daily_occupancy)
+{
+    double preference_penalty = 0.0, accounting_penalty = 0.0;
+//    vector<int> daily_occupancy(N_DAYS,0);
+
+    //preference penalty...
+    for(int i = 0; i < x.size(); i++)
+    {
+	  preference_penalty+= preference_costs[i][x[i]];
+	  daily_occupancy[x[i]] +=familiy_size[i];
+    }
+   for(int d = 0 ; d < N_DAYS; d++) //it ould be a sum instead..
+   {
+	  if(daily_occupancy[d] > MAX_OCCUPANCY)
+		return 1e12*(daily_occupancy[d]-MAX_OCCUPANCY);
+ 	  else if(daily_occupancy[d] < MIN_OCCUPANCY)
+		return 1e12*(MIN_OCCUPANCY-daily_occupancy[d]);
+   }
+   // accounting penalty
+   for(int i = 0; i < 99; i++)
+      accounting_penalty+=  accounting_costs[daily_occupancy[i]-125][daily_occupancy[i+1]-125];
+    accounting_penalty +=  accounting_costs[daily_occupancy[99]-125][daily_occupancy[99]-125];
+
+   return accounting_penalty + preference_penalty;
+}
+void SantaWorkshop::init_table_permutations(int max_subspace_size)
+{
+   vector<int> row_perm(max_subspace_size, NOT_CHECK);
+   vector<int> branch_1(max_subspace_size, 10); // limit the feasible space of each permutation if it is necessary
+   return;
+   while(row_perm[max_subspace_size-1]< branch_1[max_subspace_size-1] && row_perm[0]< branch_1[0] )
+   {
+      row_perm[0]++;     
+      table_permutations.push_back(row_perm); 
+      for(int col = 0; col < row_perm.size()-1; col++) //check all cols in range..
+      {
+	if(row_perm[col] > branch_1[col])
+	{
+	  row_perm[col] = NOT_CHECK;
+	  row_perm[col+1]++;
+	}
+      }
+   }  
 }
