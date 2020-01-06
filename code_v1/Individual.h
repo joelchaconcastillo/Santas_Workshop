@@ -30,6 +30,8 @@ class Individual{
 		void perturbe(vector<int> &x, int nvar);
 
 		double calculateFitness(vector<int> &x_ind);
+
+ 		vector<vector<pair<int, int>>>  branch_in_feasible_space(const vector<int> &original, const vector<int> fam_perm, const int max_size_feasible_solutions, vector<int> &daily_occupancy );
 		double incremental_evaluation();
 		void print(vector<int> &sol);
 		double fitness;

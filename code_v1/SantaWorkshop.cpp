@@ -8,7 +8,7 @@ using namespace std;
 long long best = 1e16;
 SantaWorkshop::SantaWorkshop(string file){
   load(file);
-  init_table_permutations(7);  
+ // init_table_permutations(6);  
 }
 void SantaWorkshop::load_example(string file, vector<int> &x_var)
 {
@@ -71,14 +71,15 @@ void SantaWorkshop::load(string file)
      accounting_costs[i][j] =  (i/400.0)*(pow(i+125, 0.5 + (abs(i-j)/50.0)));
   }
 }
-double SantaWorkshop::incremental_evaluation(vector<int> &current_solution, vector<int> &id_families, vector<int> &proposed_day, vector<int> &daily_occupancy)
+double SantaWorkshop::incremental_evaluation(vector<int> &current_solution, vector<pair<int, int> > &proposed_day, vector<int> &daily_occupancy)
 {
      double preference_penalty = 0.0, accounting_penalty = 0.0;
     //preference penalty...
-    for(int i = 0; i < id_families.size(); i++)
+    for(int i = 0 ; i < proposed_day.size(); i++)
     {
-	  int id_fam = id_families[i];
-	  int day_out = current_solution[id_fam], day_in = proposed_day[i];
+	  int id_fam = proposed_day[i].first;
+	  int day_out = current_solution[id_fam], day_in = proposed_day[i].second;
+//	  if(day_out == day_in) return 1e20; //is not necessary to compare the same days
 	  daily_occupancy[day_out] -= familiy_size[id_fam];
 	  daily_occupancy[day_in] += familiy_size[id_fam];
 	  preference_penalty +=  preference_costs[id_fam][day_out] - preference_costs[id_fam][day_in];

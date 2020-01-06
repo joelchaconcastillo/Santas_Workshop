@@ -19,7 +19,7 @@ class SantaWorkshop{
 		}
 		double evaluate(vector<int> &x);
 		double evaluate(vector<int> &x, vector<int> &daily_occupancy);
-		double incremental_evaluation(vector<int> &current_solution, vector<int> &id_families, vector<int> &proposed_day, vector<int> &daily_occupancy);
+		double incremental_evaluation(vector<int> &current_solution, vector<pair<int, int> > &proposed_day, vector<int> &daily_occupancy);
 		void init_table_permutations(int max_subspace_size);
 
 
