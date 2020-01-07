@@ -16,12 +16,16 @@ void Individual::subspace_local_search()
 {
   vector<int> original  = x_var;
   vector<int> daily_occupancy(SW->N_DAYS, 0);
-  double best_score= SW->evaluate(x_var, daily_occupancy);
+  vector<pair<int, int>> best_partial_solution;
+  double preference_penalty = 0.0;
+  double best_score= SW->evaluate(x_var, daily_occupancy, preference_penalty);
+  cout <<best_score<<endl;
   vector<int> fam_perm;
   for(int i = 0; i < original.size(); i++) fam_perm.push_back(i);
 
-  int N_training = 10;
-  int max_size_feasible_solutions = 100;
+  int N_training = 1000;
+  int max_size_feasible_solutions = 1000;
+  bool improved = false;
   while(true)
   { 
      for(int ite = 0; ite < N_training; ite++)
@@ -30,43 +34,53 @@ void Individual::subspace_local_search()
 	random_shuffle(fam_perm.begin(), fam_perm.end());
         //check the feasible solutions... <--- partial_solution
         vector<vector<pair<int, int>>> feasible_subspace = branch_in_feasible_space(original, fam_perm, max_size_feasible_solutions, daily_occupancy);
-	bool improved = false;
+//	for(int i = 0 ; i < 10; i++) cout << fam_perm[i] << " ";
+//	cout <<endl;
+//	for(int i = 0 ; i < feasible_subspace.size(); i++)
+//	{
+//	for(int j = 0 ; j < feasible_subspace[i].size(); j++)
+//		 cout << feasible_subspace[i][j].second << " ";
+//	cout <<endl;
+//	}
         for(int i = 0; i < feasible_subspace.size(); i++)
         {	
-	   double score = SW->incremental_evaluation(original, feasible_subspace[i], daily_occupancy);
-	  printf("%lf\n", score);
-  	  // if(score < best_score)
-	  // {
-	  //      best_score = score;
-	  //      //best_partial_solution = feasible_subspace[i];
-	  //      improved = true;
-	  // }
- 	}
+	   double score = SW->incremental_evaluation(preference_penalty, original, feasible_subspace[i], daily_occupancy);
+	   
+  	   if(score < best_score)
+	   {
+	        best_score = score;
+	        best_partial_solution = feasible_subspace[i];
+	        improved = true;
+		cout << best_score <<endl;
+	   }
+ 	} 
      }
-
- //    if(improved) //the solution is improved in the training part..
- //    {
- //        for(int i = 0 ; i < best_partial_solution.size(); i++)
- //        {
-
- //        }
- //        improved = false;
- //    }
+//	cout << best_score <<endl;
+     if(improved) //the solution is improved in the training part..
+     {
+         for(int i = 0 ; i < best_partial_solution.size(); i++)
+	   original[best_partial_solution[i].first] = best_partial_solution[i].second;	    
+  	 best_score= SW->evaluate(original, daily_occupancy, preference_penalty);
+         
+	cout <<"-- " << best_score <<endl;
+	print(original);
+         improved = false;
+     }
   }
 //  x_var = original;
 //  fitness = score;
 }
- vector<vector<pair<int, int>>>  Individual::branch_in_feasible_space(const vector<int> &original, const vector<int> fam_perm, const int max_size_feasible_solutions, vector<int> &daily_occupancy )
+ vector<vector<pair<int, int>>>  Individual::branch_in_feasible_space(const vector<int> &original, const vector<int> &fam_perm, const int max_size_feasible_solutions, vector<int> daily_occupancy )
 {
 
   vector< vector<pair<int, int > > > feasible_subspace;
    int max_subspace_size = 50;
    vector<int> row_perm(max_subspace_size, NOT_CHECK);
-   vector<int> branch_1(max_subspace_size, 9); // limit the feasible space of each permutation if it is necessary
+   vector<int> branch_1(max_subspace_size, 3); // limit the feasible space of each permutation if it is necessary, inclusive the digit given..
    int cont_nines = 0;
-   int tries = 0;
+   int tries = 0, maxtries = 1e4;
 //   while(cont_nines < max_subspace_size)
-   while(feasible_subspace.size() < max_size_feasible_solutions)
+   while(feasible_subspace.size() < max_size_feasible_solutions && tries < maxtries)
    {
       cont_nines = 0 ;
       tries++;
@@ -79,19 +93,21 @@ void Individual::subspace_local_search()
         int id_fam = fam_perm[i];
         int day_in = domain[id_fam][row_perm[i]];
         int day_out = original[id_fam];
-        int current_occupancy_in = daily_occupancy[day_in] + SW->familiy_size[id_fam];
-        int current_occupancy_out = daily_occupancy[day_out] - SW->familiy_size[id_fam];
 
-       if(SW->MAX_OCCUPANCY < current_occupancy_in) feasibility=false;
-       if( SW->MIN_OCCUPANCY > current_occupancy_in) feasibility=false;
-       if(SW->MAX_OCCUPANCY < current_occupancy_out) feasibility=false;
-       if( SW->MIN_OCCUPANCY > current_occupancy_out) feasibility=false;
+        daily_occupancy[day_in] += SW->familiy_size[id_fam];
+        daily_occupancy[day_out] -= SW->familiy_size[id_fam];
+
+	if(daily_occupancy[day_in] > SW->MAX_OCCUPANCY) feasibility = false;
+	if(daily_occupancy[day_in] < SW->MIN_OCCUPANCY) feasibility = false;
+	if(daily_occupancy[day_out] > SW->MAX_OCCUPANCY) feasibility = false;
+	if(daily_occupancy[day_out] < SW->MIN_OCCUPANCY) feasibility = false;
+
 
        if(!feasibility) break;
 	 sparse_row.push_back(make_pair(id_fam, day_in));
       }
 
-      if( feasibility)
+      if( feasibility && !sparse_row.empty())
       feasible_subspace.push_back(sparse_row); 
 
       row_perm[0]++;     
@@ -106,7 +122,7 @@ void Individual::subspace_local_search()
       }
       if(row_perm[max_subspace_size-1] > branch_1[max_subspace_size-1]) cont_nines++;
    }  
-  cout << tries << " "<<feasible_subspace.size() <<endl;
+//  cout << tries << " "<<feasible_subspace.size() <<endl;
   return feasible_subspace;
 }
 void Individual::localSearch()
