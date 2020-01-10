@@ -15,30 +15,40 @@ void printBest(){
 void Individual::subspace_local_search()
 {
   vector<int> daily_occupancy(SW->N_DAYS, 0), fam_perm;
+  
   double preference_penalty = 0.0, fitness= SW->evaluate(x_var, daily_occupancy, preference_penalty);
   for(int i = 0; i < x_var.size(); i++) fam_perm.push_back(i);
   int N_training = 1000;
-  int max_size_feasible_solutions = 4;
+  int max_size_feasible_solutions = 2;
+
+  vector<int> best_local_perm(max_size_feasible_solutions), best_local_option;
   cout << "current...." <<fitness<<endl;
   while(true)
   { 
-     vector<int> current_solution=x_var;
-     double current_score = fitness;
+     double best_local_score = fitness;
      for(int ite = 0; ite < N_training; ite++)
      {
 	random_shuffle(fam_perm.begin(), fam_perm.end());
-        pair< double, vector<pair<int, int> > > best_config =  try_all_permutations(fam_perm, max_size_feasible_solutions, preference_penalty, daily_occupancy, current_solution, current_score);
-//	 cout <<  best_config.first <<endl;
-        if(best_config.first < fitness)
+        pair< double, vector<int> > best_config =  try_all_permutations(fam_perm, max_size_feasible_solutions, preference_penalty, daily_occupancy, x_var, fitness);
+        if(best_config.first < best_local_score)
 	{
-	   fitness= best_config.first;
-	   for(int i = 0 ; i < best_config.second.size(); i++) x_var[best_config.second[i].first] =best_config.second[i].second;
-	}
+	   best_local_score= best_config.first;
+	   best_local_option = best_config.second;
+	   copy_n(fam_perm.begin(), max_size_feasible_solutions, best_local_perm.begin());
+	}	
      }
-  	fitness= SW->evaluate(x_var, daily_occupancy, preference_penalty);
-	cout <<"-- " << fitness<<endl;
-//	print(x_var);
-	cout <<"-- " << fitness<<endl;
+         if( best_local_score < fitness) 
+	{
+	   for(int i = 0 ; i < best_local_option.size(); i++)
+	   {
+	     if(best_local_option[i] == NOT_CHECK)continue;
+	     x_var[best_local_perm[i]] = domain[best_local_perm[i]][best_local_option[i]];
+	   }
+   	   fitness= SW->evaluate(x_var, daily_occupancy, preference_penalty);
+   	  	cout <<"-- " << fitness<< " | "<< SW->evaluate(x_var) <<endl;;
+   	  //	print(x_var);
+   	  //	cout <<"-- " << fitness<<endl;
+	}
   }
 }
 bool Individual::my_next_combination(vector<int> &row_perm, const vector<int> &upper_opt)
@@ -54,11 +64,11 @@ bool Individual::my_next_combination(vector<int> &row_perm, const vector<int> &u
 	  row_perm[col+1]++;
 	}
       }
-      if(row_perm[row_perm.size()-1] > upper_opt[row_perm.size()-1]) cont_nines++;
+      if(row_perm[row_perm.size()-1] >= upper_opt[row_perm.size()-1]) cont_nines++;
    if(cont_nines == row_perm.size()) return false;
    return true;
 }
- pair< double, vector<pair<int, int>> >Individual::try_all_permutations(const vector<int> &perm, const int max_families, double preference_penalty, vector<int> daily_occupancy, vector< int > best_solution, double best_score)
+ pair< double, vector<int> >Individual::try_all_permutations(const vector<int> &perm, const int max_families, double preference_penalty, vector<int> daily_occupancy, vector< int > best_solution, double best_score)
 {
    vector<int> row_perm(max_families, NOT_CHECK), upper_opt(max_families, 9), best_partial_solution;
    int tries = 0, maxtries=1e5;
@@ -74,13 +84,7 @@ bool Individual::my_next_combination(vector<int> &row_perm, const vector<int> &u
         best_partial_solution = row_perm;
      }
    }
-   vector<pair<int, int> > final_solution;
-   for(int i = 0 ; i < best_partial_solution.size(); i++) //apply the best option..
-   {
-	if(best_partial_solution[i] == NOT_CHECK) continue;
-	final_solution.push_back(make_pair(perm[i], domain[perm[i]][best_partial_solution[i]]));
-   }
- return make_pair(best_score, final_solution);
+ return make_pair(best_score, best_partial_solution);
 }
 // vector<vector<pair<int, int>>>  Individual::branch_in_feasible_space(const vector<int> &original, const vector<int> &fam_perm, const int max_size_feasible_solutions, vector<int> daily_occupancy )
 //{

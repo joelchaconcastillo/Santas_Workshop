@@ -71,6 +71,25 @@ void SantaWorkshop::load(string file)
      accounting_costs[i][j] =  (i/400.0)*(pow(i+125, 0.5 + (abs(i-j)/50.0)));
   }
 }
+double SantaWorkshop::Accounting_Penalty_Computation(vector<int> &daily_occupancy)
+{
+  double accounting_penalty = 0.0;
+   for(int i = 0; i < 99; i++)
+   {
+ 	int i2 = min(i+1, 99);
+	if(daily_occupancy[i] > MAX_OCCUPANCY)
+		accounting_penalty += 1e10*(daily_occupancy[i]-MAX_OCCUPANCY);
+	else if(daily_occupancy[i] < MIN_OCCUPANCY)
+		accounting_penalty += 1e10*(MIN_OCCUPANCY-daily_occupancy[i]);
+	else if(daily_occupancy[i2] > MAX_OCCUPANCY)
+		accounting_penalty += 1e10*(daily_occupancy[i2]-MAX_OCCUPANCY);
+	else if(daily_occupancy[i2] < MIN_OCCUPANCY)
+		accounting_penalty += 1e10*(MIN_OCCUPANCY-daily_occupancy[i2]);
+	else
+         accounting_penalty +=  accounting_costs[daily_occupancy[i]-125][daily_occupancy[i2]-125];
+   }
+  return accounting_penalty;
+}
 double SantaWorkshop::incremental_evaluation(vector<int> &x, const vector<int> &row_perm, const vector<int> &perm, double preference_penalty, vector<int> daily_occupancy)
 {
      double accounting_penalty = 0.0;
@@ -82,28 +101,22 @@ double SantaWorkshop::incremental_evaluation(vector<int> &x, const vector<int> &
 
 	  int id_fam = perm[i];
 	  int day_out = x[id_fam], day_in = domain[id_fam][row_perm[i]];
-
 	  daily_occupancy[day_out] -= familiy_size[id_fam];
 	  daily_occupancy[day_in] += familiy_size[id_fam];
 	if(daily_occupancy[day_in] > MAX_OCCUPANCY)
-		return 1e120*(daily_occupancy[day_in]-MAX_OCCUPANCY);
- 	  else if(daily_occupancy[day_out] < MIN_OCCUPANCY)
-		return 1e120*(MIN_OCCUPANCY-daily_occupancy[day_out]);
+		return 1e10*(daily_occupancy[day_in]-MAX_OCCUPANCY);
+	else if(daily_occupancy[day_in] < MIN_OCCUPANCY)
+		return 1e10*(MIN_OCCUPANCY-daily_occupancy[day_in]);
+ 	else if(daily_occupancy[day_out] < MIN_OCCUPANCY)
+		return 1e10*(MIN_OCCUPANCY-daily_occupancy[day_out]);
+	else if(daily_occupancy[day_out] > MAX_OCCUPANCY)
+		return 1e10*(daily_occupancy[day_out]-MAX_OCCUPANCY);
 
 	  preference_penalty +=  preference_costs[id_fam][day_in] - preference_costs[id_fam][day_out];
     }
 
-//   for(int d = 0 ; d < N_DAYS; d++) //instead it could be a sum..
-//   {
-//	  if(daily_occupancy[d] > MAX_OCCUPANCY)
-//		return 1e120*(daily_occupancy[d]-MAX_OCCUPANCY);
-// 	  else if(daily_occupancy[d] < MIN_OCCUPANCY)
-//		return 1e120*(MIN_OCCUPANCY-daily_occupancy[d]);
-//   }
    // accounting penalty
-   for(int i = 0; i < 99; i++)
-      accounting_penalty +=  accounting_costs[daily_occupancy[i]-125][daily_occupancy[i+1]-125];
-    accounting_penalty +=  accounting_costs[daily_occupancy[99]-125][daily_occupancy[99]-125];
+    accounting_penalty = Accounting_Penalty_Computation(daily_occupancy);
 
    return accounting_penalty + preference_penalty;  
 }
@@ -121,15 +134,12 @@ double SantaWorkshop::evaluate(vector<int> &x)
    for(int d = 0 ; d < N_DAYS; d++) //it ould be a sum instead..
    {
 	  if(daily_occupancy[d] > MAX_OCCUPANCY)
-		return 1e12*(daily_occupancy[d]-MAX_OCCUPANCY);
+		return 1e10*(daily_occupancy[d]-MAX_OCCUPANCY);
  	  else if(daily_occupancy[d] < MIN_OCCUPANCY)
-		return 1e12*(MIN_OCCUPANCY-daily_occupancy[d]);
+		return 1e10*(MIN_OCCUPANCY-daily_occupancy[d]);
    }
-   // accounting penalty
-   for(int i = 0; i < 99; i++)
-      accounting_penalty+=  accounting_costs[daily_occupancy[i]-125][daily_occupancy[i+1]-125];
-    accounting_penalty +=  accounting_costs[daily_occupancy[99]-125][daily_occupancy[99]-125];
 
+    accounting_penalty = Accounting_Penalty_Computation(daily_occupancy);
    return accounting_penalty + preference_penalty;
 }
 
@@ -148,15 +158,12 @@ double SantaWorkshop::evaluate(vector<int> &x, vector<int> &daily_occupancy, dou
    for(int d = 0 ; d < N_DAYS; d++) //it ould be a sum instead..
    {
 	  if(daily_occupancy[d] > MAX_OCCUPANCY)
-		return 1e12*(daily_occupancy[d]-MAX_OCCUPANCY);
+		return 1e10*(daily_occupancy[d]-MAX_OCCUPANCY);
  	  else if(daily_occupancy[d] < MIN_OCCUPANCY)
-		return 1e12*(MIN_OCCUPANCY-daily_occupancy[d]);
+		return 1e10*(MIN_OCCUPANCY-daily_occupancy[d]);
    }
    // accounting penalty
-   for(int i = 0; i < 99; i++)
-      accounting_penalty+=  accounting_costs[daily_occupancy[i]-125][daily_occupancy[i+1]-125];
-    accounting_penalty +=  accounting_costs[daily_occupancy[99]-125][daily_occupancy[99]-125];
-
+    accounting_penalty = Accounting_Penalty_Computation(daily_occupancy);
    return accounting_penalty + preference_penalty;
 }
 void SantaWorkshop::init_table_permutations(int max_subspace_size)

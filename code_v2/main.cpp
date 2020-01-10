@@ -5,8 +5,9 @@ int main(int argc, char **argv){
 	double pc = 0.9;
 	double pm = 0.01;
 	double finalTime = 25 * 60;
-	unsigned long l = 1;
-//      l = time(NULL);
+	unsigned long l = 1578667679;
+      l = time(NULL);
+	cout << l <<endl;
 	srand(l);
 
 	string file = "Instances/public/family_data.csv";
@@ -17,7 +18,7 @@ int main(int argc, char **argv){
 	//
 	  Individual indiv(SW);
 	  //SW.load_example("Instances/public/submission_672254.0276683343.csv", indiv.x_var);
-	 // SW.load_example("o", indiv.x_var);
+	  //SW.load_example("o", indiv.x_var);
           //indiv.iterated_local_search();
 	  indiv.subspace_local_search();
 //	  double p = indiv.calculateFitness(indiv.x_var);
