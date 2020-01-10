@@ -45,9 +45,9 @@ void Individual::subspace_local_search()
 	     x_var[best_local_perm[i]] = domain[best_local_perm[i]][best_local_option[i]];
 	   }
    	   fitness= SW->evaluate(x_var, daily_occupancy, preference_penalty);
-   	  	cout <<"-- " << fitness<< " | "<< SW->evaluate(x_var) <<endl;;
-   	  //	print(x_var);
-   	  //	cout <<"-- " << fitness<<endl;
+   	  //	cout <<"-- " << fitness<< " | "<< SW->evaluate(x_var) <<endl;;
+   	  	print(x_var);
+   	  	cout <<"-- " << fitness<<endl;
 	}
   }
 }
