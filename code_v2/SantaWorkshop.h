@@ -18,10 +18,11 @@ class SantaWorkshop{
 		~SantaWorkshop(){
 		}
 		double evaluate(vector<int> &x);
-		double evaluate(vector<int> &x, vector<int> &daily_occupancy, double &preference_penalty);
+		double evaluate(vector<int> &x, vector<int> &daily_occupancy, double &preference_penalty, double &accounting_penalty, double &feasibility_level);
 
 		double Accounting_Penalty_Computation(vector<int> &daily_occupancy);
 		double incremental_evaluation(vector<int> &x, const vector<int> &row_perm, const vector<int> &perm, double preference_penalty, vector<int> daily_occupancy);
+		double incremental_evaluation(vector<int> &x, const vector<int> &row_perm, const vector<int> &perm, double preference_penalty, double accounting_penalty, vector<int> daily_occupancy, double feasibility_level);
 		void init_table_permutations(int max_subspace_size);
 
 

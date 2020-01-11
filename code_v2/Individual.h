@@ -29,7 +29,7 @@ class Individual{
 		void localSearch();
 		void perturbe(vector<int> &x, int nvar);
 
- 		pair< double, vector<int> >try_all_permutations(const vector<int> &perm, const int max_families, double preference_penalty, vector<int> daily_occupancy, vector< int > best_solution, double best_score);
+ 		double try_all_permutations(const vector<int> &perm, const int max_families, double preference_penalty, double accounting_penalty, vector<int> daily_occupancy, vector< int > best_solution, double best_score, vector<int> &best_partial_solution, double feasibility_level);
 		bool my_next_combination(vector<int> &row_perm, const vector<int> &upper_opt);
 		double calculateFitness(vector<int> &x_ind);
 

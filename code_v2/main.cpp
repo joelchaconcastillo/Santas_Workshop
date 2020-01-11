@@ -5,8 +5,8 @@ int main(int argc, char **argv){
 	double pc = 0.9;
 	double pm = 0.01;
 	double finalTime = 25 * 60;
-	unsigned long l = 1578667679;
-      l = time(NULL);
+	unsigned long l = 1578701648;
+//      l = time(NULL);
 	cout << l <<endl;
 	srand(l);
 
