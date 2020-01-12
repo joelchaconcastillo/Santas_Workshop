@@ -16,56 +16,54 @@ void printBest(){
 
 void Individual::subspace_local_search()
 {
-  vector<int> daily_occupancy(SW->N_DAYS, 0), fam_perm;
-  
-  
-  double feasibility_level, accounting_penalty, preference_penalty = 0.0, fitness= SW->evaluate(x_var, daily_occupancy, preference_penalty, accounting_penalty, feasibility_level);
-  for(int i = 0; i < x_var.size(); i++) fam_perm.push_back(i);
-  int N_training = 100;
-  int max_size_feasible_solutions = 2;
 
-  vector<int> best_local_perm(max_size_feasible_solutions), best_local_option;
-  cout << "current...." <<fitness<<endl;
+  struct Solution S;
+  S.score = fitness;
+  S.x = x_var;
+
+  
+  SW->evaluate(S);
+
+  cout << "current...." <<S.score<<endl;
+
+  vector<int> fam_perm;
+  for(int i = 0; i < x_var.size(); i++) fam_perm.push_back(i);
+
+  int N_training = 10;
+  int subspace_size= 5;
   while(true)
   { 
-     double best_local_score = fitness;
-     vector<int> best_config(max_size_feasible_solutions);
-    auto start = high_resolution_clock::now(); 
+     vector<int> best_local_perm_family(subspace_size), best_local_perm_days(subspace_size); //variables to find the local optimal..
+     double best_local_score = (S.feasible)?S.score:S.unfeasibility_score;
+
+     auto start = high_resolution_clock::now();  ///taking the computing time..
      for(int ite = 0; ite < N_training; ite++)
      {
 	random_shuffle(fam_perm.begin(), fam_perm.end());
-         double score = try_all_permutations(fam_perm, max_size_feasible_solutions, preference_penalty, accounting_penalty, daily_occupancy, x_var, fitness, best_config, feasibility_level);
-        if(score < best_local_score)
-	{
-	   best_local_score= score;
-	   best_local_option = best_config;
-	   copy_n(fam_perm.begin(), max_size_feasible_solutions, best_local_perm.begin());
-	}	
-
+        try_all_permutations(S, fam_perm, best_local_score, best_local_perm_family, best_local_perm_days); //it replaces the best solution..
      }
-
        auto stop = high_resolution_clock::now(); 
-
        auto duration = duration_cast<microseconds>(stop - start); 
-  
-    cout << "Time taken by function: "<< duration.count()/1.0e6 << " seconds" << endl; 
+       //// 
+//       cout << "Time taken by function: "<< duration.count()/1.0e6 << " seconds" << endl; 
 
 
-         if( best_local_score < fitness) 
+        if( best_local_score < ((S.feasible)?S.score:S.unfeasibility_score)) 
 	{
-	   for(int i = 0 ; i < best_local_option.size(); i++)
+	   for(int i = 0 ; i < subspace_size; i++)
 	   {
-	     if(best_local_option[i] == NOT_CHECK)continue;
-	     x_var[best_local_perm[i]] = domain[best_local_perm[i]][best_local_option[i]];
+	     if(best_local_perm_days[i] == NOT_CHECK)continue;
+	     S.x[best_local_perm_family[i]] = domain[best_local_perm_family[i]][best_local_perm_days[i]];
 	   }
-	cout <<feasibility_level <<endl;
-   	   fitness= SW->evaluate(x_var, daily_occupancy, preference_penalty, accounting_penalty, feasibility_level);
-   	  //	cout <<"-- " << fitness<< " | "<< SW->evaluate(x_var) <<endl;;
-//   	  	print(x_var);
-   	  	cout <<"-- " << fitness<<endl;
+   	   SW->evaluate(S);
+	cout << S.score<<endl;
+//   	  	print(S.x_var);
 	}
-//	return;
+
+//	cout <<S.feasible <<" "<< ((S.feasible)?S.score:S.unfeasibility_score) << " " << best_local_score<< endl;
   }
+  fitness = S.score;
+  x_var = S.x;
 }
 bool Individual::my_next_combination(vector<int> &row_perm, const vector<int> &upper_opt)
 {
@@ -84,66 +82,32 @@ bool Individual::my_next_combination(vector<int> &row_perm, const vector<int> &u
    if(cont_nines == row_perm.size()) return false;
    return true;
 }
-double Individual::try_all_permutations(const vector<int> &perm, const int max_families, double preference_penalty, double accounting_penalty, vector<int> daily_occupancy, vector< int > best_solution, double best_score, vector<int> &best_partial_solution, double feasibility_level)
+void Individual::try_all_permutations(struct Solution &S, const vector<int> &perm, double &best_local_score, vector<int> &best_local_perm_family, vector<int> &best_local_perm_days)
 {
-   vector<int> row_perm(max_families, NOT_CHECK), upper_opt(max_families, 9);
+   int k_subspace = best_local_perm_family.size();
+   vector<int> row_perm(k_subspace, NOT_CHECK), upper_opt(k_subspace, 9); //it can be optimized................
    while(my_next_combination(row_perm, upper_opt) )
    {
      //check first feasibility and then score..
-     //double current_score = SW->incremental_evaluation(best_solution, row_perm, perm, preference_penalty, accounting_penalty, daily_occupancy, feasibility_level);
-     double current_score = SW->incremental_evaluation(best_solution, row_perm, perm, preference_penalty, daily_occupancy);
-     //uptade the best...
-     if(current_score < best_score)
+     double current_score = 0.0;
+     if(S.feasible)
      {
-        best_score = current_score;	
-        best_partial_solution = row_perm;
+       current_score = SW->incremental_evaluation(S, row_perm, perm);
+     }
+     else
+     {
+       current_score = SW->incremental_evaluation_unfeasible(S, row_perm, perm);
+       if(current_score <= 0) //if this movement changes to feasible, then check the feasibility, yep yhe unfeasibility score should be major than the feasible score..
+          current_score -= SW->incremental_evaluation(S, row_perm, perm);
+     }
+     if( best_local_score > current_score )
+     {
+	best_local_score = current_score;
+	copy_n(perm.begin(), k_subspace, best_local_perm_family.begin());
+	copy_n(row_perm.begin(), k_subspace , best_local_perm_days.begin());
      }
    }
- return best_score;
 }
-// vector<vector<pair<int, int>>>  Individual::branch_in_feasible_space(const vector<int> &original, const vector<int> &fam_perm, const int max_size_feasible_solutions, vector<int> daily_occupancy )
-//{
-//
-//  vector< vector<pair<int, int > > > feasible_subspace;
-//   int max_subspace_size = 50;
-//   vector<int> row_perm(max_subspace_size, NOT_CHECK);
-//   vector<int> branch_1(max_subspace_size, 9); // limit the feasible space of each permutation if it is necessary, inclusive the digit given..
-//   int cont_nines = 0;
-//   int tries = 0, maxtries = 1e5;
-////   while(cont_nines < max_subspace_size)
-//   while(feasible_subspace.size() < max_size_feasible_solutions && tries < maxtries)
-//   {
-//      cont_nines = 0 ;
-//      tries++;
-//      bool feasibility = true;     
-//      vector<pair<int, int>> sparse_row;
-//      vector<int> daily_occupancy2 = daily_occupancy;
-//      for(int i = 0; i < row_perm.size(); i++)
-//      {
-//        if(row_perm[i] == NOT_CHECK) continue;
-//	//check feasibility.. just accept this permutation if its a feasible solution...
-//        int id_fam = fam_perm[i];
-//        int day_in = domain[id_fam][row_perm[i]];
-//        int day_out = original[id_fam];
-//
-//        daily_occupancy2[day_in] += SW->familiy_size[id_fam];
-//        daily_occupancy2[day_out] -= SW->familiy_size[id_fam];
-//
-//	if(daily_occupancy2[day_in] > SW->MAX_OCCUPANCY) feasibility = false;
-//	if(daily_occupancy2[day_in] < SW->MIN_OCCUPANCY) feasibility = false;
-//	if(daily_occupancy2[day_out] > SW->MAX_OCCUPANCY) feasibility = false;
-//	if(daily_occupancy2[day_out] < SW->MIN_OCCUPANCY) feasibility = false;
-//
-//
-//       if(!feasibility) break;
-//	 sparse_row.push_back(make_pair(id_fam, day_in));
-//      }
-//
-//      
-//   }  
-////  cout << tries << " "<<feasible_subspace.size() <<endl;
-//  return feasible_subspace;
-//}
 void Individual::localSearch()
 {
 

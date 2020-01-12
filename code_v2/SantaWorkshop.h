@@ -10,23 +10,35 @@ using namespace std;
 #define NOT_CHECK -1
 
 void printBest();
-
+struct Solution
+{
+ 	   double score, preference_penalty, accounting_penalty, unfeasibility_score;
+	   bool feasible;
+ 	   vector<int> x, daily_occupancy;
+};
 class SantaWorkshop{
 	public:
-             
+		
 		SantaWorkshop(string file);
 		~SantaWorkshop(){
 		}
+		void evaluate(struct Solution &S);
 		double evaluate(vector<int> &x);
-		double evaluate(vector<int> &x, vector<int> &daily_occupancy, double &preference_penalty, double &accounting_penalty, double &feasibility_level);
+//		double evaluate(struct Solution &S);
 
 		double Accounting_Penalty_Computation(vector<int> &daily_occupancy);
-		double incremental_evaluation(vector<int> &x, const vector<int> &row_perm, const vector<int> &perm, double preference_penalty, vector<int> daily_occupancy);
-		double incremental_evaluation(vector<int> &x, const vector<int> &row_perm, const vector<int> &perm, double preference_penalty, double accounting_penalty, vector<int> daily_occupancy, double feasibility_level);
+
+		double incremental_evaluation_unfeasible(struct Solution &S, const vector<int> &row_perm, const vector<int> &perm);
+
+		double incremental_evaluation(struct Solution &S, const vector<int> &row_perm, const vector<int> &perm);
+		double incremental_evaluation_fast(struct Solution &S, const vector<int> &row_perm, const vector<int> &perm);
+
+
 		void init_table_permutations(int max_subspace_size);
 
 
 		void load(string file);
+ 	        inline double quality_unfeasibility(int sum_occupancy){  return max(0.0, 1e10*(sum_occupancy-MAX_OCCUPANCY)) + max(0.0, 1e10*(MIN_OCCUPANCY-sum_occupancy)); }
 		void load_example(string file, vector<int> &x);
    		int N_FAM= 5000, N_OPTIONS=10, MAX_OCCUPANCY = 300, MIN_OCCUPANCY = 125, N_DAYS=100, max_occupancy, min_occupancy; 
 		vector<vector<int>> domain, inv_domain;

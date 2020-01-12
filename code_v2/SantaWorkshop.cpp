@@ -77,180 +77,171 @@ double SantaWorkshop::Accounting_Penalty_Computation(vector<int> &daily_occupanc
    for(int i = 0; i < 99; i++)
    {
  	int i2 = min(i+1, 99);
-	if(daily_occupancy[i] > MAX_OCCUPANCY)
-		accounting_penalty += 1e10*(daily_occupancy[i]-MAX_OCCUPANCY);
-	else if(daily_occupancy[i] < MIN_OCCUPANCY)
-		accounting_penalty += 1e10*(MIN_OCCUPANCY-daily_occupancy[i]);
-	else if(daily_occupancy[i2] > MAX_OCCUPANCY)
-		accounting_penalty += 1e10*(daily_occupancy[i2]-MAX_OCCUPANCY);
-	else if(daily_occupancy[i2] < MIN_OCCUPANCY)
-		accounting_penalty += 1e10*(MIN_OCCUPANCY-daily_occupancy[i2]);
-	else
+//	if(quality_unfeasibility(daily_occupancy[i]) > 0 ) continue;
+//	if(quality_unfeasibility(daily_occupancy[i2]) > 0) continue;
+//	else
          accounting_penalty +=  accounting_costs[daily_occupancy[i]-125][daily_occupancy[i2]-125];
    }
   return accounting_penalty;
 }
-double SantaWorkshop::incremental_evaluation(vector<int> &x, const vector<int> &row_perm, const vector<int> &perm, double preference_penalty, vector<int> daily_occupancy)
+double SantaWorkshop::incremental_evaluation_unfeasible(struct Solution &S, const vector<int> &row_perm, const vector<int> &perm)
 {
-     double accounting_penalty = 0.0;
-//    unordered_map<int, int> prev_day; 
-    //preference penalty...
-    for(int i = 0 ; i < row_perm.size(); i++)
+    int k_subspace = row_perm.size();
+    double unfeasibility_score = 0.0;
+    for(int i = 0 ; i < k_subspace; i++) //O(subspace) << N_DAYS
     {
  	  if( row_perm[i] == NOT_CHECK) continue;	
-
 	  int id_fam = perm[i];
-	  int day_out = x[id_fam], day_in = domain[id_fam][row_perm[i]];
-//	  if(prev_day[day_out] == 0)
-//	  prev_day[day_out] = daily_occupancy[day_out];
-//	  if(prev_day[day_in] == 0)
-//	  prev_day[day_in] = daily_occupancy[day_in];
-
-	  daily_occupancy[day_out] -= familiy_size[id_fam];
-	  daily_occupancy[day_in] += familiy_size[id_fam];
-	if(daily_occupancy[day_in] > MAX_OCCUPANCY) 
-		return 1e10*(daily_occupancy[day_in]-MAX_OCCUPANCY);
-	else if(daily_occupancy[day_in] < MIN_OCCUPANCY) 
-		return 1e10*(MIN_OCCUPANCY-daily_occupancy[day_in]);
- 	else if(daily_occupancy[day_out] < MIN_OCCUPANCY) 
-		return 1e10*(MIN_OCCUPANCY-daily_occupancy[day_out]);
-	else if(daily_occupancy[day_out] > MAX_OCCUPANCY) 
-		return 1e10*(daily_occupancy[day_out]-MAX_OCCUPANCY);
-
-	  preference_penalty +=  preference_costs[id_fam][day_in] - preference_costs[id_fam][day_out];
+	  int day_out = S.x[id_fam], day_in = domain[id_fam][row_perm[i]];
+	  S.daily_occupancy[day_out] -= familiy_size[id_fam];
+	  S.daily_occupancy[day_in] += familiy_size[id_fam];
     }
 
-   // accounting penalty
-    accounting_penalty = Accounting_Penalty_Computation(daily_occupancy);
+   for(int d = 0 ; d < N_DAYS; d++) //it ould be a sum instead..
+	unfeasibility_score += quality_unfeasibility(S.daily_occupancy[d]);
 
-   //reestore daily..
-//   for(auto i : prev_day)
-//	daily_occupancy[i.first] = i.second;
-
-   return accounting_penalty + preference_penalty;  
+    for(int i = 0 ; i < k_subspace; i++) //O(subspace) << N_DAYS
+    {
+ 	  if( row_perm[i] == NOT_CHECK) continue;	
+	  int id_fam = perm[i];
+	  int day_out = S.x[id_fam], day_in = domain[id_fam][row_perm[i]];
+	  S.daily_occupancy[day_out] += familiy_size[id_fam];
+	  S.daily_occupancy[day_in] -= familiy_size[id_fam];
+    }
+   return unfeasibility_score; 
 }
-double SantaWorkshop::incremental_evaluation(vector<int> &x, const vector<int> &row_perm, const vector<int> &perm, double preference_penalty, double accounting_penalty, vector<int> daily_occupancy, double feasibility_level)
+double SantaWorkshop::incremental_evaluation(struct Solution &S, const vector<int> &row_perm, const vector<int> &perm)
 {
-    double unfeasibility_before = 0.0, unfeasibility_after = 0.0;
-    unordered_map<int, bool> visited;
-    vector<int> days_to_visit;
-    
-  //  for(int i = 0 ; i < row_perm.size(); i++)
-  //  {
-  //        if( row_perm[i] == NOT_CHECK) continue;	
-  //        int id_fam = perm[i];
-  //        int day_out = x[id_fam], day_in = domain[id_fam][row_perm[i]];
-  //      if(!visited[day_in])
-  //       {
-  //         days_to_visit.push_back(day_in);
-  //         visited[day_in]=true;
-  //      }
-  //      if(!visited[day_out])
-  //      {
-  //        days_to_visit.push_back(day_out);
-  //        visited[day_out]=true;
-  //      }
-  //  }
-  //  for(int i = 0 ; i < days_to_visit.size(); i++)
-  //  {
-  //      int day = days_to_visit[i], day_b = days_to_visit[i]-1, day_a = min(days_to_visit[i]+1, 99);
-  //      unfeasibility_before += max(0.0, 1e10*(daily_occupancy[day]-MAX_OCCUPANCY));
-  //      unfeasibility_before += max(0.0, 1e10*(MIN_OCCUPANCY-daily_occupancy[day]));
-  //        if(MIN_OCCUPANCY<=daily_occupancy[day] && daily_occupancy[day] < MAX_OCCUPANCY)
-  //        {
-  //           if(MIN_OCCUPANCY<=daily_occupancy[day_a] && daily_occupancy[day_a]<MAX_OCCUPANCY)
-  //            accounting_penalty += -accounting_costs[daily_occupancy[day]-125][daily_occupancy[day_a]-125] ;
-  //        if(0<=day_b && MIN_OCCUPANCY<=daily_occupancy[day_b] && daily_occupancy[day_b]< MAX_OCCUPANCY)
-  //           accounting_penalty += -accounting_costs[daily_occupancy[day_b]-125][daily_occupancy[day]-125] ;
-  //        }
-  //  } 
-  //  for(int i = 0 ; i < row_perm.size(); i++)
-  //  {
-  //        if( row_perm[i] == NOT_CHECK) continue;	
-  //        int id_fam = perm[i];
-  //        int day_out = x[id_fam], day_in = domain[id_fam][row_perm[i]];
-  //      
-  //        daily_occupancy[day_out] -= familiy_size[id_fam];
-  //        daily_occupancy[day_in] += familiy_size[id_fam];
+    int k_subspace = row_perm.size();
+    double accounting_penalty, preference_penalty = S.preference_penalty, score_change;
+    double violation_constraint = 0.0;
+    //preference penalty...
+    for(int i = 0 ; i < k_subspace; i++) //O(subspace) << N_DAYS
+    {
+ 	  if( row_perm[i] == NOT_CHECK) continue;	
+	  int id_fam = perm[i];
+	  int day_out = S.x[id_fam], day_in = domain[id_fam][row_perm[i]];
+	  S.daily_occupancy[day_out] -= familiy_size[id_fam];
+	  S.daily_occupancy[day_in] += familiy_size[id_fam];
 
-  //        if(feasibility_level <= 0)
-  //        {
-  //      	if(daily_occupancy[day_in] > MAX_OCCUPANCY) return 1e10;
-  //      	if(daily_occupancy[day_in] < MIN_OCCUPANCY) return 1e10;
-  //      	if(daily_occupancy[day_out] > MAX_OCCUPANCY) return 1e10;
-  //      	if(daily_occupancy[day_out] < MIN_OCCUPANCY) return 1e10;
-  // 	  }
-  //        preference_penalty +=  preference_costs[id_fam][day_in] - preference_costs[id_fam][day_out];
-  //  }
+          violation_constraint += quality_unfeasibility(S.daily_occupancy[day_in]) + quality_unfeasibility(S.daily_occupancy[day_out]);
+	  preference_penalty +=  preference_costs[id_fam][day_in] - preference_costs[id_fam][day_out];
+    }
+   // accounting penalty
+   if(violation_constraint <= 0)
+   {
+      accounting_penalty = Accounting_Penalty_Computation(S.daily_occupancy);
+      score_change = accounting_penalty + preference_penalty;
+   }
 
-  //for(int i = 0 ; i < days_to_visit.size(); i++)
-  //  {
-  //      int day = days_to_visit[i], day_b = days_to_visit[i]-1, day_a = min(days_to_visit[i]+1, 99);
-  //      unfeasibility_after += max(0.0, 1e10*(daily_occupancy[day]-MAX_OCCUPANCY));
-  //      unfeasibility_after += max(0.0, 1e10*(MIN_OCCUPANCY-daily_occupancy[day]));
-  //        if(MIN_OCCUPANCY<=daily_occupancy[day] && daily_occupancy[day] < MAX_OCCUPANCY)
-  //        {
-  //           if(MIN_OCCUPANCY<=daily_occupancy[day_a] && daily_occupancy[day_a]<MAX_OCCUPANCY)
-  //            accounting_penalty += accounting_costs[daily_occupancy[day]-125][daily_occupancy[day_a]-125] ;
-  //        if(0<=day_b && MIN_OCCUPANCY<=daily_occupancy[day_b] && daily_occupancy[day_b]< MAX_OCCUPANCY)
-  //           accounting_penalty += accounting_costs[daily_occupancy[day_b]-125][daily_occupancy[day]-125] ;
-  //        }
-  //  }
-//	cout << feasibility_level << " "<<unfeasibility_after << " "<< unfeasibility_before <<endl;
-    if( feasibility_level > 0.0)
-	return feasibility_level + unfeasibility_after - unfeasibility_before;
-    else
-      return accounting_penalty + preference_penalty;  
+   //reestore day_occupancy..
+    for(int i = 0 ; i < k_subspace; i++) //O(subspace) << N_DAYS
+    {
+ 	  if( row_perm[i] == NOT_CHECK) continue;	
+	  int id_fam = perm[i];
+	  int day_out = S.x[id_fam], day_in = domain[id_fam][row_perm[i]];
+	  S.daily_occupancy[day_out] += familiy_size[id_fam];
+	  S.daily_occupancy[day_in] -= familiy_size[id_fam];
+    }
+   if( violation_constraint >0) return violation_constraint;
+   else  return  score_change;
+}
+double SantaWorkshop::incremental_evaluation_fast(struct Solution &S, const vector<int> &row_perm, const vector<int> &perm)
+{
+   int k_subspace = row_perm.size();
+   double p1_prev = 0.0, p2_prev = 0.0 , p1_next= 0.0, p2_next= 0.0; //p1 preference cost, p2 accounting penalty
+  for(int i = 0 ; i < k_subspace; i++)
+  {
+     if( row_perm[i] == NOT_CHECK) continue;	
+     int id_fam = perm[i], day_out = S.x[id_fam], day_in = domain[id_fam][row_perm[i]];
+     p1_prev += preference_costs[id_fam][day_out];
+     p2_prev += accounting_costs[day_out][min(99,day_out+1)] + (day_out-1 > 0)?accounting_costs[day_out-1][day_out]:0.0;
+     S.daily_occupancy[day_out] -= familiy_size[id_fam];
+     S.daily_occupancy[day_in] += familiy_size[id_fam];
+
+     double violation_constraint = quality_unfeasibility(S.daily_occupancy[day_in]) + quality_unfeasibility(S.daily_occupancy[day_out]);
+     if( violation_constraint > 0) return violation_constraint;
+
+     p1_next +=  preference_costs[id_fam][day_in];
+     p2_next += accounting_costs[day_in][min(99,day_in+1)] + (day_in-1 > 0)?accounting_costs[day_in-1][day_in]:0.0;
+  }
+  for(int i = 0 ; i < k_subspace; i++) //O(subspace) << N_DAYS
+    {
+ 	  if( row_perm[i] == NOT_CHECK) continue;	
+	  int id_fam = perm[i];
+	  int day_out = S.x[id_fam], day_in = domain[id_fam][row_perm[i]];
+	  S.daily_occupancy[day_out] += familiy_size[id_fam];
+	  S.daily_occupancy[day_in] -= familiy_size[id_fam];
+    }
+
+   return S.preference_penalty +p1_next - p1_prev + S.accounting_penalty + p2_next - p2_prev;
+}
+void SantaWorkshop::evaluate(struct Solution &S)
+{
+    S.unfeasibility_score = 0.0;
+    S.preference_penalty = 0.0;
+    S.accounting_penalty = 0.0;
+    S.daily_occupancy.assign(N_DAYS, 0);
+
+    //preference penalty...
+    for(int i = 0; i < N_FAM; i++)
+    {
+	  S.preference_penalty += preference_costs[i][S.x[i]];
+	  S.daily_occupancy[S.x[i]] +=familiy_size[i];
+    }
+   for(int i = 0 ; i < N_DAYS; i++) 
+   {
+	S.unfeasibility_score += quality_unfeasibility(S.daily_occupancy[i]);
+	int i2 = min(i+1, N_DAYS-1);
+	if( quality_unfeasibility(S.daily_occupancy[i]) <= 0 && quality_unfeasibility(S.daily_occupancy[i2]) <= 0)
+         S.accounting_penalty +=  accounting_costs[S.daily_occupancy[i]-125][S.daily_occupancy[i2]-125];
+   }
+   S.score = S.accounting_penalty + S.preference_penalty;
+   S.feasible = ( S.unfeasibility_score <= 0);
 }
 double SantaWorkshop::evaluate(vector<int> &x)
 {
-    double preference_penalty = 0.0, accounting_penalty = 0.0;
-    vector<int> daily_occupancy(N_DAYS,0);
+    double preference_penalty = 0.0, accounting_penalty = 0.0, unfeasibility_score=0.0;
+    vector<int> daily_occupancy(N_DAYS, 0);
 
     //preference penalty...
-    for(int i = 0; i < x.size(); i++)
+    for(int i = 0; i < N_FAM; i++)
     {
 	  preference_penalty+= preference_costs[i][x[i]];
 	  daily_occupancy[x[i]] +=familiy_size[i];
     }
-   for(int d = 0 ; d < N_DAYS; d++) //it ould be a sum instead..
+   for(int i = 0; i < N_DAYS; i++)
    {
-	  if(daily_occupancy[d] > MAX_OCCUPANCY)
-		return 1e10*(daily_occupancy[d]-MAX_OCCUPANCY);
- 	  else if(daily_occupancy[d] < MIN_OCCUPANCY)
-		return 1e10*(MIN_OCCUPANCY-daily_occupancy[d]);
+	unfeasibility_score += quality_unfeasibility(daily_occupancy[i]);
+ 	int i2 = min(i+1, N_DAYS-1);
+	if( quality_unfeasibility(daily_occupancy[i]) <= 0 && quality_unfeasibility(daily_occupancy[i2]) <= 0)
+         accounting_penalty +=  accounting_costs[daily_occupancy[i]-125][daily_occupancy[i2]-125];
    }
 
-    accounting_penalty = Accounting_Penalty_Computation(daily_occupancy);
-   return accounting_penalty + preference_penalty;
+   return accounting_penalty + preference_penalty + unfeasibility_score;
 }
-
-double SantaWorkshop::evaluate(vector<int> &x, vector<int> &daily_occupancy, double &preference_penalty, double &accounting_penalty, double &feasibility_level)
-{
-    double unfeasibility = 0.0;
-    accounting_penalty = 0.0;
-    preference_penalty = 0.0;
-
-    for(int i = 0; i < daily_occupancy.size(); i++) daily_occupancy[i] = 0;
-
-    //preference penalty...
-    for(int i = 0; i < x.size(); i++)
-    {
-	  preference_penalty += preference_costs[i][x[i]];
-	  daily_occupancy[x[i]] +=familiy_size[i];
-    }
-   for(int d = 0 ; d < N_DAYS; d++) //it ould be a sum instead..
-   {
-	  if(daily_occupancy[d] > MAX_OCCUPANCY)
-		unfeasibility += 1e10*(daily_occupancy[d]-MAX_OCCUPANCY);
- 	  else if(daily_occupancy[d] < MIN_OCCUPANCY)
-		unfeasibility +=1e10*(MIN_OCCUPANCY-daily_occupancy[d]);
-   }
-   feasibility_level = unfeasibility;
-   if(unfeasibility > 0) return unfeasibility;
-   accounting_penalty = Accounting_Penalty_Computation(daily_occupancy);
-   return accounting_penalty + preference_penalty;
-}
+//double SantaWorkshop::evaluate(vector<int> &x, vector<int> &daily_occupancy, double &preference_penalty, double &accounting_penalty, bool &solution_feasible)
+//{
+//    double unfeasibility = 0.0;
+//    accounting_penalty = 0.0;
+//    preference_penalty = 0.0;
+//
+//    for(int i = 0; i < daily_occupancy.size(); i++) daily_occupancy[i] = 0;
+//
+//    //preference penalty...
+//    for(int i = 0; i < x.size(); i++)
+//    {
+//	  preference_penalty += preference_costs[i][x[i]];
+//	  daily_occupancy[x[i]] +=familiy_size[i];
+//    }
+//   for(int d = 0 ; d < N_DAYS; d++) //it ould be a sum instead..
+//	  unfeasibility += quality_unfeasibility(S.daily_occupancy[d]);
+//
+//   if(unfeasibility > 0){ solution_feasible = false; return unfeasibility;}
+//   else solution_feasible = true;
+//   accounting_penalty = Accounting_Penalty_Computation(daily_occupancy);
+//   return accounting_penalty + preference_penalty;
+//}
 void SantaWorkshop::init_table_permutations(int max_subspace_size)
 {
    vector<int> row_perm(max_subspace_size, NOT_CHECK);
