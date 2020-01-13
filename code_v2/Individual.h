@@ -30,7 +30,12 @@ class Individual{
 		void perturbe(vector<int> &x, int nvar);
 
 		void try_all_permutations(struct Solution &S, const vector<int> &perm, double &best_local_score, vector<int> &best_local_perm_family, vector<int> &best_local_perm_days);
+
+		bool my_next_combination(vector<int> &row_perm, const vector<int> &upper_opt, const vector<int> &fam_perm, vector<pair<int, int> > &fam_day_perm, int &Real_size);
+
 		bool my_next_combination(vector<int> &row_perm, const vector<int> &upper_opt);
+
+		bool my_next_combination(vector<int> &row_perm, const vector<int> &upper_opt, const vector<int> &fam_perm, vector<pair<int, int> > &fam_day_perm, int &Real_size, vector<bool> &grid, vector<int> &list_days, int &Real_size_list_days);
 		double calculateFitness(vector<int> &x_ind);
 
  		//vector<vector<pair<int, int>>>  branch_in_feasible_space(const vector<int> &original, const vector<int> &fam_perm, const int max_size_feasible_solutions, vector<int> daily_occupancy );

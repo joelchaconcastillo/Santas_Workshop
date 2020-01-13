@@ -110,10 +110,91 @@ double SantaWorkshop::incremental_evaluation_unfeasible(struct Solution &S, cons
     }
    return unfeasibility_score; 
 }
+double SantaWorkshop::incremental_evaluation(struct Solution &S, vector<pair<int, int> > &fam_day_perm, int Real_Size, vector<int> &days, int &Real_Size_Days)
+{
+    double accounting_penalty=S.accounting_penalty, preference_penalty = S.preference_penalty, score_change=0.0;
+    double violation_constraint = 0.0;
+    for(int id = 0; id < Real_Size_Days; id++)
+    {
+ 	int i = days[id], i2 = min(i+1, 99);
+        accounting_penalty -=  accounting_costs[S.daily_occupancy[i]-125][S.daily_occupancy[i2]-125];
+    }
+
+    for(int i = 0; i < Real_Size; i++)
+    {
+	  int id_fam = fam_day_perm[i].first;
+	  int day_out = S.x[id_fam], day_in = fam_day_perm[i].second;
+	  S.daily_occupancy[day_out] -= familiy_size[id_fam];
+	  S.daily_occupancy[day_in] += familiy_size[id_fam];
+
+          violation_constraint += quality_unfeasibility(S.daily_occupancy[day_in]) + quality_unfeasibility(S.daily_occupancy[day_out]);
+	  preference_penalty +=  preference_costs[id_fam][day_in] - preference_costs[id_fam][day_out];
+    }
+   // accounting penalty
+   if(violation_constraint <= 0)
+   {
+      //accounting_penalty = Accounting_Penalty_Computation(S.daily_occupancy);
+      for(int id = 0; id < Real_Size_Days; id++)
+     {
+ 	int i = days[id], i2 = min(i+1, 99);
+        accounting_penalty +=  accounting_costs[S.daily_occupancy[i]-125][S.daily_occupancy[i2]-125];
+     }
+      score_change = accounting_penalty + preference_penalty;
+   }
+
+   //reestore day_occupancy..
+    for(int i = 0; i < Real_Size; i++)
+    {
+	  int id_fam = fam_day_perm[i].first;
+	  int day_out = S.x[id_fam], day_in = fam_day_perm[i].second;
+
+	  S.daily_occupancy[day_out] += familiy_size[id_fam];
+	  S.daily_occupancy[day_in] -= familiy_size[id_fam];
+    }
+
+   if(violation_constraint > 0) return violation_constraint;
+
+   return  score_change;
+}
+double SantaWorkshop::incremental_evaluation(struct Solution &S, vector<pair<int, int> > &fam_day_perm, int Real_Size)
+{
+    double accounting_penalty=0.0, preference_penalty = S.preference_penalty, score_change=0.0;
+    double violation_constraint = 0.0;
+    for(int i = 0; i < Real_Size; i++)
+    {
+	  int id_fam = fam_day_perm[i].first;
+	  int day_out = S.x[id_fam], day_in = fam_day_perm[i].second;
+	  S.daily_occupancy[day_out] -= familiy_size[id_fam];
+	  S.daily_occupancy[day_in] += familiy_size[id_fam];
+
+          violation_constraint += quality_unfeasibility(S.daily_occupancy[day_in]) + quality_unfeasibility(S.daily_occupancy[day_out]);
+	  preference_penalty +=  preference_costs[id_fam][day_in] - preference_costs[id_fam][day_out];
+    }
+   // accounting penalty
+   if(violation_constraint <= 0)
+   { 
+      accounting_penalty = Accounting_Penalty_Computation(S.daily_occupancy);
+      score_change = accounting_penalty + preference_penalty;
+   }
+
+   //reestore day_occupancy..
+    for(int i = 0; i < Real_Size; i++)
+    {
+	  int id_fam = fam_day_perm[i].first;
+	  int day_out = S.x[id_fam], day_in = fam_day_perm[i].second;
+
+	  S.daily_occupancy[day_out] += familiy_size[id_fam];
+	  S.daily_occupancy[day_in] -= familiy_size[id_fam];
+    }
+
+   if(violation_constraint > 0) return violation_constraint;
+
+   return  score_change;
+}
 double SantaWorkshop::incremental_evaluation(struct Solution &S, const vector<int> &row_perm, const vector<int> &perm)
 {
     int k_subspace = row_perm.size();
-    double accounting_penalty, preference_penalty = S.preference_penalty, score_change;
+    double accounting_penalty=0.0, preference_penalty = S.preference_penalty, score_change=0.0;
     double violation_constraint = 0.0;
     //preference penalty...
     for(int i = 0 ; i < k_subspace; i++) //O(subspace) << N_DAYS
@@ -143,38 +224,116 @@ double SantaWorkshop::incremental_evaluation(struct Solution &S, const vector<in
 	  S.daily_occupancy[day_out] += familiy_size[id_fam];
 	  S.daily_occupancy[day_in] -= familiy_size[id_fam];
     }
-   if( violation_constraint >0) return violation_constraint;
-   else  return  score_change;
+
+   if(violation_constraint > 0) return violation_constraint;
+
+   return  score_change;
 }
 double SantaWorkshop::incremental_evaluation_fast(struct Solution &S, const vector<int> &row_perm, const vector<int> &perm)
 {
    int k_subspace = row_perm.size();
-   double p1_prev = 0.0, p2_prev = 0.0 , p1_next= 0.0, p2_next= 0.0; //p1 preference cost, p2 accounting penalty
-  for(int i = 0 ; i < k_subspace; i++)
+   double violation_constraint = 0.0, preference_penalty = S.preference_penalty, accounting_penalty = S.accounting_penalty;
+   //unordered_map<int, bool> days_visited;
+
+  for(int i = 0 ; i < k_subspace; i++) // checking the visited days 
   {
      if( row_perm[i] == NOT_CHECK) continue;	
-     int id_fam = perm[i], day_out = S.x[id_fam], day_in = domain[id_fam][row_perm[i]];
-     p1_prev += preference_costs[id_fam][day_out];
-     p2_prev += accounting_costs[day_out][min(99,day_out+1)] + (day_out-1 > 0)?accounting_costs[day_out-1][day_out]:0.0;
-     S.daily_occupancy[day_out] -= familiy_size[id_fam];
-     S.daily_occupancy[day_in] += familiy_size[id_fam];
+     int id_fam = perm[i], day1 = S.x[id_fam], day2 = domain[id_fam][row_perm[i]] ;
 
-     double violation_constraint = quality_unfeasibility(S.daily_occupancy[day_in]) + quality_unfeasibility(S.daily_occupancy[day_out]);
-     if( violation_constraint > 0) return violation_constraint;
-
-     p1_next +=  preference_costs[id_fam][day_in];
-     p2_next += accounting_costs[day_in][min(99,day_in+1)] + (day_in-1 > 0)?accounting_costs[day_in-1][day_in]:0.0;
+    // if(!days_visited[day1]) 
+    // {
+    //    accounting_penalty -= accounting_costs[S.daily_occupancy[day1]-125][S.daily_occupancy[min(99,day1+1)]-125];
+    //    if(day1>0) 
+    //    {
+    //       accounting_penalty -= accounting_costs[S.daily_occupancy[day1-1]-125][S.daily_occupancy[day1]-125];
+    //       days_visited[day1-1] = true;
+    //    }
+    //    days_visited[day1] = true;
+    // }
+    // else if(day1 > 0  && !days_visited[day1-1])
+    // {
+    //    accounting_penalty -= accounting_costs[S.daily_occupancy[day1-1]-125][S.daily_occupancy[day1]-125];
+    //    days_visited[day1-1] = true;
+    // }
+    // if(!days_visited[day2]) 
+    // {
+    //    accounting_penalty -= accounting_costs[S.daily_occupancy[day2]-125][S.daily_occupancy[min(99,day2+1)]-125];
+    //    if(day2>0) 
+    //    {
+    //       accounting_penalty -= accounting_costs[S.daily_occupancy[day2-1]-125][S.daily_occupancy[day2]-125];
+    //       days_visited[day2-1] = true;
+    //    }
+    //    days_visited[day2] = true;
+    // }
+    // else if(day2 > 0  && !days_visited[day2-1])
+    // {
+    //    accounting_penalty -= accounting_costs[S.daily_occupancy[day2-1]-125][S.daily_occupancy[day2]-125];
+    //    days_visited[day2-1] = true;
+    // }
   }
-  for(int i = 0 ; i < k_subspace; i++) //O(subspace) << N_DAYS
-    {
- 	  if( row_perm[i] == NOT_CHECK) continue;	
-	  int id_fam = perm[i];
-	  int day_out = S.x[id_fam], day_in = domain[id_fam][row_perm[i]];
-	  S.daily_occupancy[day_out] += familiy_size[id_fam];
-	  S.daily_occupancy[day_in] -= familiy_size[id_fam];
-    }
+//  for(int i = 0 ; i < k_subspace; i++)
+//  {
+//     if( row_perm[i] == NOT_CHECK) continue;	
+//     int id_fam = perm[i], day_out = S.x[id_fam], day_in = domain[id_fam][row_perm[i]];
+//     S.daily_occupancy[day_out] -= familiy_size[id_fam];
+//     S.daily_occupancy[day_in] += familiy_size[id_fam];
+//     violation_constraint += quality_unfeasibility(S.daily_occupancy[day_in]) + quality_unfeasibility(S.daily_occupancy[day_out]);
+//     preference_penalty +=  preference_costs[id_fam][day_in] - preference_costs[id_fam][day_out];
+//  }
+//   days_visited.clear();
+  if(violation_constraint <=0)
+  for(int i = 0 ; i < k_subspace; i++) // checking the visited days 
+  {
+     if( row_perm[i] == NOT_CHECK) continue;	
+     int id_fam = perm[i], day1 = S.x[id_fam], day2 = domain[id_fam][row_perm[i]] ;
 
-   return S.preference_penalty +p1_next - p1_prev + S.accounting_penalty + p2_next - p2_prev;
+    // if(!days_visited[day1]) 
+    // {
+    //    accounting_penalty += accounting_costs[S.daily_occupancy[day1]-125][S.daily_occupancy[min(99,day1+1)]-125];
+    //    if(day1>0) 
+    //    {
+    //       accounting_penalty += accounting_costs[S.daily_occupancy[day1-1]-125][S.daily_occupancy[day1]-125];
+    //       days_visited[day1-1] = true;
+    //    }
+    //    days_visited[day1] = true;
+    // }
+    // else if(day1 > 0  && !days_visited[day1-1])
+    // {
+    //    accounting_penalty += accounting_costs[S.daily_occupancy[day1-1]-125][S.daily_occupancy[day1]-125];
+    //    days_visited[day1-1] = true;
+    // }
+    // if(!days_visited[day2]) 
+    // {
+    //    accounting_penalty += accounting_costs[S.daily_occupancy[day2]-125][S.daily_occupancy[min(99,day2+1)]-125];
+    //    if(day2>0) 
+    //    {
+    //       accounting_penalty += accounting_costs[S.daily_occupancy[day2-1]-125][S.daily_occupancy[day2]-125];
+    //       days_visited[day2-1] = true;
+    //    }
+    //    days_visited[day2] = true;
+    // }
+    // else if(day2 > 0  && !days_visited[day2-1])
+    // {
+    //    accounting_penalty += accounting_costs[S.daily_occupancy[day2-1]-125][S.daily_occupancy[day2]-125];
+    //    days_visited[day2-1] = true;
+    // }
+  }
+  //for(auto& item:days_visited)
+  //{
+  //      accounting_penalty += accounting_costs[S.daily_occupancy[item.first]-125][S.daily_occupancy[min(99,item.first+1)]-125];
+  //       if(item.first > 0) accounting_penalty += accounting_costs[S.daily_occupancy[item.first-1]-125][S.daily_occupancy[item.first]-125];
+  //}
+
+//  for(int i = 0 ; i < k_subspace; i++) //O(subspace) << N_DAYS
+//  {
+// 	  if( row_perm[i] == NOT_CHECK) continue;	
+//	  int id_fam = perm[i];
+//	  int day_out = S.x[id_fam], day_in = domain[id_fam][row_perm[i]];
+//	  S.daily_occupancy[day_out] += familiy_size[id_fam];
+//	  S.daily_occupancy[day_in] -= familiy_size[id_fam];
+//  }
+  if(violation_constraint > 0 ) return violation_constraint;
+  return preference_penalty + accounting_penalty;
 }
 void SantaWorkshop::evaluate(struct Solution &S)
 {
@@ -196,8 +355,8 @@ void SantaWorkshop::evaluate(struct Solution &S)
 	if( quality_unfeasibility(S.daily_occupancy[i]) <= 0 && quality_unfeasibility(S.daily_occupancy[i2]) <= 0)
          S.accounting_penalty +=  accounting_costs[S.daily_occupancy[i]-125][S.daily_occupancy[i2]-125];
    }
-   S.score = S.accounting_penalty + S.preference_penalty;
    S.feasible = ( S.unfeasibility_score <= 0);
+   S.score = (S.feasible)?(S.accounting_penalty + S.preference_penalty):S.unfeasibility_score;
 }
 double SantaWorkshop::evaluate(vector<int> &x)
 {

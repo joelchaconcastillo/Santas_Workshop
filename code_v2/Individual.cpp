@@ -29,12 +29,12 @@ void Individual::subspace_local_search()
   vector<int> fam_perm;
   for(int i = 0; i < x_var.size(); i++) fam_perm.push_back(i);
 
-  int N_training = 10;
+  int N_training = 1000;
   int subspace_size= 5;
   while(true)
   { 
      vector<int> best_local_perm_family(subspace_size), best_local_perm_days(subspace_size); //variables to find the local optimal..
-     double best_local_score = (S.feasible)?S.score:S.unfeasibility_score;
+     double best_local_score = S.score;
 
      auto start = high_resolution_clock::now();  ///taking the computing time..
      for(int ite = 0; ite < N_training; ite++)
@@ -45,10 +45,8 @@ void Individual::subspace_local_search()
        auto stop = high_resolution_clock::now(); 
        auto duration = duration_cast<microseconds>(stop - start); 
        //// 
-//       cout << "Time taken by function: "<< duration.count()/1.0e6 << " seconds" << endl; 
-
-
-        if( best_local_score < ((S.feasible)?S.score:S.unfeasibility_score)) 
+       cout << "Time taken by function: "<< duration.count()/1.0e6 << " seconds" << endl; 
+        if( best_local_score < S.score) 
 	{
 	   for(int i = 0 ; i < subspace_size; i++)
 	   {
@@ -57,6 +55,7 @@ void Individual::subspace_local_search()
 	   }
    	   SW->evaluate(S);
 	cout << S.score<<endl;
+	printf("%lf\n", S.x_var);
 //   	  	print(S.x_var);
 	}
 
@@ -69,7 +68,8 @@ bool Individual::my_next_combination(vector<int> &row_perm, const vector<int> &u
 {
       int cont_nines = 0;
       row_perm[0]++;     
-      for(int col = 0; col < row_perm.size()-1; col++) //check all cols in range..
+      int size_w = row_perm.size()-1; 
+      for(int col = 0; col < size_w; col++) //check all cols in range..
       {
 	if(row_perm[col] > upper_opt[col])
 	{
@@ -78,27 +78,126 @@ bool Individual::my_next_combination(vector<int> &row_perm, const vector<int> &u
 	  row_perm[col+1]++;
 	}
       }
-      if(row_perm[row_perm.size()-1] >= upper_opt[row_perm.size()-1]) cont_nines++;
-   if(cont_nines == row_perm.size()) return false;
+      if(row_perm[size_w] >= upper_opt[size_w]) cont_nines++;
+   if(cont_nines == size_w+1) return false;
+   return true;
+}
+bool Individual::my_next_combination(vector<int> &row_perm, const vector<int> &upper_opt, const vector<int> &fam_perm, vector<pair<int, int> > &fam_day_perm, int &Real_size)//, vector<bool> &grid, vector<int> &list_days, int &Real_size_list_days)
+{
+      int cont_nines = 0;
+      Real_size  = 0;
+//      Real_size_list_days = 0;
+      row_perm[0]++;     
+      int size_w = row_perm.size()-1; 
+	
+
+      for(int col = 0; col < size_w; col++) //check all cols in range..
+      {
+	if(row_perm[col] > upper_opt[col])
+	{
+	 if(row_perm[col] >= upper_opt[col]) cont_nines++;
+	  row_perm[col] = NOT_CHECK;
+	  row_perm[col+1]++;
+	}
+	if(row_perm[col] != NOT_CHECK)
+	{
+	 fam_day_perm[Real_size++] = make_pair(fam_perm[col], domain[fam_perm[col]][row_perm[col]]);
+//	if(!grid_days[domain[fam_perm[col]][row_perm[col]]] )	
+//         {
+//	   grid_days[domain[fam_perm[col]][row_perm[col]]]=true;
+//	   list_days[Real_size_list_days++] = domain[fam_perm[col]][row_perm[col]];
+//	 }
+
+	}
+      }
+      if(row_perm[size_w] >= upper_opt[size_w]) cont_nines++;
+      if(row_perm[size_w] != NOT_CHECK)
+      {
+	   fam_day_perm[Real_size++] = make_pair(fam_perm[size_w], domain[fam_perm[size_w]][row_perm[size_w]]);
+      }
+
+   if(cont_nines == size_w+1) return false;
+   return true;
+}
+bool Individual::my_next_combination(vector<int> &row_perm, const vector<int> &upper_opt, const vector<int> &fam_perm, vector<pair<int, int> > &fam_day_perm, int &Real_size, vector<bool> &grid_days, vector<int> &list_days, int &Real_size_list_days)
+{
+      int cont_nines = 0;
+      Real_size  = 0;
+      Real_size_list_days = 0;
+      row_perm[0]++;     
+      int size_w = row_perm.size()-1; 
+	
+
+      for(int col = 0; col < size_w; col++) //check all cols in range..
+      {
+	if(row_perm[col] > upper_opt[col])
+	{
+	 if(row_perm[col] >= upper_opt[col]) cont_nines++;
+	  row_perm[col] = NOT_CHECK;
+	  row_perm[col+1]++;
+	}
+
+	if(row_perm[col] != NOT_CHECK)
+	{
+	 int day = domain[fam_perm[col]][row_perm[col]];
+	 fam_day_perm[Real_size++] = make_pair(fam_perm[col], day);
+	if(!grid_days[day] )	
+         {
+	   grid_days[day]=true;
+	   list_days[Real_size_list_days++] = day; 
+	 }
+	if(day>0 && !grid_days[day-1] )	
+	    {
+		grid_days[day-1] = true;
+	        list_days[Real_size_list_days++] = day-1;
+  	    }
+	}
+      }
+      if(row_perm[size_w] >= upper_opt[size_w]) cont_nines++;
+      if(row_perm[size_w] != NOT_CHECK)
+	{
+	 int day = domain[fam_perm[size_w]][row_perm[size_w]];
+	 fam_day_perm[Real_size++] = make_pair(fam_perm[size_w], day);
+	if(!grid_days[day] )	
+         {
+	   grid_days[day]=true;
+	   list_days[Real_size_list_days++] = day; 
+	 }
+	if(day>0 && !grid_days[day-1] )	
+	    {
+		grid_days[day-1] = true;
+	        list_days[Real_size_list_days++] = day-1;
+  	    }
+	}
+   for(int i = 0; i < Real_size_list_days; i++) grid_days[list_days[i]]=false;
+   if(cont_nines == size_w+1) return false;
    return true;
 }
 void Individual::try_all_permutations(struct Solution &S, const vector<int> &perm, double &best_local_score, vector<int> &best_local_perm_family, vector<int> &best_local_perm_days)
 {
-   int k_subspace = best_local_perm_family.size();
+   int k_subspace = best_local_perm_family.size(), Real_size=0;
    vector<int> row_perm(k_subspace, NOT_CHECK), upper_opt(k_subspace, 9); //it can be optimized................
-   while(my_next_combination(row_perm, upper_opt) )
+   vector<pair<int, int>> fam_day_perm(k_subspace);
+   vector<bool> grid_days(100, false);
+   vector<int> list_days(2*k_subspace);
+   int Real_size_list_days = 0;
+   //while(my_next_combination(row_perm, upper_opt, perm, fam_day_perm, Real_size))//, grid_days, list_days, Real_size_list_days) )
+   while(my_next_combination(row_perm, upper_opt, perm, fam_day_perm, Real_size, grid_days, list_days, Real_size_list_days) )
    {
      //check first feasibility and then score..
-     double current_score = 0.0;
+     double current_score = 1e300;
      if(S.feasible)
      {
-       current_score = SW->incremental_evaluation(S, row_perm, perm);
+       //current_score = SW->incremental_evaluation(S, row_perm, perm);
+       current_score = SW->incremental_evaluation(S, fam_day_perm, Real_size);
+       //current_score = SW->incremental_evaluation(S, fam_day_perm, Real_size, list_days, Real_size_list_days);
      }
      else
      {
        current_score = SW->incremental_evaluation_unfeasible(S, row_perm, perm);
-       if(current_score <= 0) //if this movement changes to feasible, then check the feasibility, yep yhe unfeasibility score should be major than the feasible score..
-          current_score -= SW->incremental_evaluation(S, row_perm, perm);
+       if(current_score <= 0) //if this movement changes to feasible, then check the feasibility, therefore tthe unfeasibility score should be major than the feasible score..
+            current_score = SW->incremental_evaluation(S, fam_day_perm, Real_size);
+       //   current_score = -SW->incremental_evaluation(S, row_perm, perm);
      }
      if( best_local_score > current_score )
      {

@@ -31,6 +31,9 @@ class SantaWorkshop{
 		double incremental_evaluation_unfeasible(struct Solution &S, const vector<int> &row_perm, const vector<int> &perm);
 
 		double incremental_evaluation(struct Solution &S, const vector<int> &row_perm, const vector<int> &perm);
+
+		double incremental_evaluation(struct Solution &S, vector<pair<int, int> > &fam_day_perm, int Real_Size);
+		double incremental_evaluation(struct Solution &S, vector<pair<int, int> > &fam_day_perm, int Real_Size, vector<int> &days, int &Real_Size_Days);
 		double incremental_evaluation_fast(struct Solution &S, const vector<int> &row_perm, const vector<int> &perm);
 
 
@@ -45,6 +48,7 @@ class SantaWorkshop{
 		vector<int> familiy_size;
 		vector<double> c1, c2, c3;
 	        vector< vector<double> > preference_costs, accounting_costs;
+//	        double preference_costs[6000][101], accounting_costs[200][200];
 		vector< vector<pair<int, int> > > table_permutations;
 };
 #endif
