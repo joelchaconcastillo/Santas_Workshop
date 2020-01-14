@@ -20,6 +20,7 @@ class SantaWorkshop{
 	public:
 		
 		SantaWorkshop(string file);
+		SantaWorkshop(){}
 		~SantaWorkshop(){
 		}
 		void evaluate(struct Solution &S);

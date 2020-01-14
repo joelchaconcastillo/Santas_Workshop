@@ -37,7 +37,7 @@ class MA {
 		vector< Individual * > offspring;
 		double initialTime;
 		double DI;
-		SantaWorkshop *SW;
+		SantaWorkshop SW;
 	        Individual bestI;
 };
 

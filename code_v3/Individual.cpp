@@ -7,7 +7,7 @@ using namespace std;
 using namespace std::chrono; 
 
 double Individual::calculateFitness(vector<int> &x_ind){
-  return SW->evaluate(x_ind);
+  return SW.evaluate(x_ind);
 }
 
 void printBest(){
@@ -22,7 +22,7 @@ void Individual::subspace_local_search()
   S.x = x_var;
 
   
-  SW->evaluate(S);
+  SW.evaluate(S);
 
 
   vector<int> fam_perm;
@@ -56,7 +56,7 @@ void Individual::subspace_local_search()
 	     if(best_local_perm_days[i] == NOT_CHECK)continue;
 	     S.x[best_local_perm_family[i]] = domain[best_local_perm_family[i]][best_local_perm_days[i]];
 	   }
-   	   SW->evaluate(S);
+   	   SW.evaluate(S);
 	   improved = true;
 //	printf("%.8f %.8f %.8f\n", best_local_score ,S.score, SW->evaluate(S.x));
 //   	  	print(S.x_var);
@@ -169,8 +169,8 @@ void Individual::try_all_permutations(struct Solution &S, const vector<int> &per
    vector<int> row_perm(k_subspace, NOT_CHECK), upper_opt(k_subspace, sub_domain_size); //it can be optimized................
    for(int i = 0; i < k_subspace; i++) upper_opt[i] = 1+rand()%9;
    vector<pair<int, int>> fam_day_perm(k_subspace);
-   vector<bool> grid_days(SW->N_DAYS, false);
-   vector<int> list_days(SW->N_DAYS);
+   vector<bool> grid_days(SW.N_DAYS, false);
+   vector<int> list_days(SW.N_DAYS);
    int Real_size_list_days = 0;
    //while(my_next_combination(row_perm, upper_opt, perm, fam_day_perm, Real_size))//, grid_days, list_days, Real_size_list_days) )
    while(my_next_combination(row_perm, upper_opt, perm, fam_day_perm, Real_size, grid_days, list_days, Real_size_list_days, S.x) )
@@ -181,11 +181,11 @@ void Individual::try_all_permutations(struct Solution &S, const vector<int> &per
      {
        //current_score = SW->incremental_evaluation(S, row_perm, perm);
        //current_score = SW->incremental_evaluation(S, fam_day_perm, Real_size);
-       current_score = SW->incremental_evaluation(S, fam_day_perm, Real_size, list_days, Real_size_list_days);
+       current_score = SW.incremental_evaluation(S, fam_day_perm, Real_size, list_days, Real_size_list_days);
      }
      else
      {
-       current_score = SW->incremental_evaluation_unfeasible(S, row_perm, perm);
+       current_score = SW.incremental_evaluation_unfeasible(S, row_perm, perm);
 //       if(current_score <= 0) //if this movement changes to feasible, then check the feasibility, therefore tthe unfeasibility score should be major than the feasible score..
 //       current_score = SW->incremental_evaluation(S, fam_day_perm, Real_size, list_days, Real_size_list_days);
 //            current_score = SW->incremental_evaluation(S, fam_day_perm, Real_size);

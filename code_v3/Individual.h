@@ -11,7 +11,7 @@ class Individual{
 	public:
 		
 		Individual(SantaWorkshop &SW_){
-		  this->SW= &SW_;
+		  this->SW= SW_;
 		  this->domain = SW_.domain;
 		  //initialization....
 		  initialization();
@@ -25,7 +25,7 @@ class Individual{
 		int getDistance(Individual &ind);
 		void Mutation(double pm);
 		void Crossover(Individual &ind);
-	        inline void Evaluation(){ this->fitness = this->SW->evaluate(this->x_var);}
+	        inline void Evaluation(){ this->fitness = this->SW.evaluate(this->x_var);}
 		void subspace_local_search();
 		void localSearch();
 		void perturbe(vector<int> &x, int nvar);
@@ -45,7 +45,7 @@ class Individual{
 		void print(vector<int> &sol);
 		double fitness;
 
-		SantaWorkshop *SW;
+		SantaWorkshop SW;
  		int dist;
 		vector<int> x_var;
 		vector<vector<int>> domain;

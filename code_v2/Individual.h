@@ -11,7 +11,7 @@ class Individual{
 	public:
 		
 		Individual(SantaWorkshop &SW_){
-		  this->SW= &SW_;
+		  this->SW= SW_;
 		  this->domain = SW_.domain;
 		  //initialization....
 		  initialization();
@@ -44,7 +44,7 @@ class Individual{
 		void print(vector<int> &sol);
 		double fitness;
 
-		SantaWorkshop *SW;
+		SantaWorkshop SW;
  		int dist;
 		vector<int> x_var;
 		vector<vector<int>> domain;
