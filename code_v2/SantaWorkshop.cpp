@@ -77,10 +77,6 @@ double SantaWorkshop::Accounting_Penalty_Computation(vector<int> &daily_occupanc
    for(int i = 0; i < N_DAYS; i++)
    {
  	int i2 = min(i+1, N_DAYS-1);
-//	if(quality_unfeasibility(daily_occupancy[i]) > 0 ) continue;
-//	if(quality_unfeasibility(daily_occupancy[i2]) > 0) continue;
-//	else
-//	if( quality_unfeasibility(daily_occupancy[i]) <= 0 && quality_unfeasibility(daily_occupancy[i2]) <= 0)
          accounting_penalty +=  accounting_costs[daily_occupancy[i]-125][daily_occupancy[i2]-125];
    }
   return accounting_penalty;
@@ -271,28 +267,6 @@ double SantaWorkshop::evaluate(vector<int> &x)
    }
    return accounting_penalty + preference_penalty + unfeasibility_score;
 }
-//double SantaWorkshop::evaluate(vector<int> &x, vector<int> &daily_occupancy, double &preference_penalty, double &accounting_penalty, bool &solution_feasible)
-//{
-//    double unfeasibility = 0.0;
-//    accounting_penalty = 0.0;
-//    preference_penalty = 0.0;
-//
-//    for(int i = 0; i < daily_occupancy.size(); i++) daily_occupancy[i] = 0;
-//
-//    //preference penalty...
-//    for(int i = 0; i < x.size(); i++)
-//    {
-//	  preference_penalty += preference_costs[i][x[i]];
-//	  daily_occupancy[x[i]] +=familiy_size[i];
-//    }
-//   for(int d = 0 ; d < N_DAYS; d++) //it ould be a sum instead..
-//	  unfeasibility += quality_unfeasibility(S.daily_occupancy[d]);
-//
-//   if(unfeasibility > 0){ solution_feasible = false; return unfeasibility;}
-//   else solution_feasible = true;
-//   accounting_penalty = Accounting_Penalty_Computation(daily_occupancy);
-//   return accounting_penalty + preference_penalty;
-//}
 void SantaWorkshop::init_table_permutations(int max_subspace_size)
 {
    vector<int> row_perm(max_subspace_size, NOT_CHECK);

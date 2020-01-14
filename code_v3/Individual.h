@@ -15,6 +15,7 @@ class Individual{
 		  this->domain = SW_.domain;
 		  //initialization....
 		  initialization();
+		  Evaluation();
 		  //Load example solution to check the evaluator...
 		}
 		Individual(){}
@@ -24,7 +25,7 @@ class Individual{
 		int getDistance(Individual &ind);
 		void Mutation(double pm);
 		void Crossover(Individual &ind);
-
+	        inline void Evaluation(){ this->fitness = this->SW->evaluate(this->x_var);}
 		void subspace_local_search();
 		void localSearch();
 		void perturbe(vector<int> &x, int nvar);

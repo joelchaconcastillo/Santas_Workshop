@@ -1,10 +1,10 @@
 #include "MA.h"
 
 int main(int argc, char **argv){
-	int N = 1;
+	int N = 10;
 	double pc = 0.9;
 	double pm = 0.01;
-	double finalTime = 25 * 60;
+	double finalTime = 10 * 60;
 	unsigned long l = 1578701648;
  //       l=1;
       l = time(NULL);
@@ -14,8 +14,9 @@ int main(int argc, char **argv){
 	string file = "Instances/public/family_data.csv";
 
 	SantaWorkshop SW(file);
-	//MA ma(N, pc, pm, finalTime, TTP);
-	//ma.run();
+	MA ma(N, pc, pm, finalTime, SW);
+	ma.run();
+   return 0;
 	//
 	  Individual indiv(SW);
 	  //SW.load_example("Instances/public/submission_672254.0276683343.csv", indiv.x_var);

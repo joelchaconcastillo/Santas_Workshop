@@ -26,21 +26,24 @@ void Individual::subspace_local_search()
 
   cout << "current...." <<S.score<<endl;
 
-  vector<int> fam_perm;
-  for(int i = 0; i < x_var.size(); i++) fam_perm.push_back(i);
+  //vector<int> fam_perm;
+//  for(int i = 0; i < x_var.size(); i++) fam_perm.push_back(i);
 
   int N_training = 1;
   int subspace_size= 1+rand()%6;
-  int sub_domain_size = 1;
+  int sub_domain_size = 2;
+  int Start = 0;
   while(true)
   { 
      vector<int> best_local_perm_family(subspace_size), best_local_perm_days(subspace_size); //variables to find the local optimal..
      double best_local_score = S.score;
-
+     vector<int> fam_perm;
+	for(int i = Start; i < Start + subspace_size; i++) fam_perm.push_back(i%x_var.size());
+     
      auto start = high_resolution_clock::now();  ///taking the computing time..
      for(int ite = 0; ite < N_training; ite++)
      {
-	random_shuffle(fam_perm.begin(), fam_perm.end());
+//	random_shuffle(fam_perm.begin(), fam_perm.end());
         try_all_permutations(S, fam_perm, best_local_score, best_local_perm_family, best_local_perm_days, sub_domain_size); //it replaces the best solution..
      }
        auto stop = high_resolution_clock::now(); 
@@ -59,7 +62,8 @@ void Individual::subspace_local_search()
 	printf("%.8f %.8f %.8f\n", best_local_score ,S.score, SW->evaluate(S.x));
 //   	  	print(S.x_var);
 	}
-
+     Start++;
+	Start %=x_var.size();
   }
   fitness = S.score;
   x_var = S.x;
@@ -199,7 +203,7 @@ void Individual::try_all_permutations(struct Solution &S, const vector<int> &per
 }
 void Individual::localSearch()
 {
-
+   subspace_local_search();
 }
 int Individual::getDistance(Individual &ind){
 return 0;

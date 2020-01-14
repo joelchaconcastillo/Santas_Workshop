@@ -24,16 +24,18 @@ void Individual::subspace_local_search()
   
   SW->evaluate(S);
 
-  cout << "current...." <<S.score<<endl;
 
   vector<int> fam_perm;
   for(int i = 0; i < x_var.size(); i++) fam_perm.push_back(i);
 
-  int N_training = 1;
-  int subspace_size= 1+rand()%6;
+  int N_training = 100;
+  int subspace_size= 2;//1+rand()%3;
   int sub_domain_size = 1;
-  while(true)
+  bool improved = true;
+  int maxite = 100, cont=0;
+  while(improved && cont++ < maxite)
   { 
+     improved = false;
      vector<int> best_local_perm_family(subspace_size), best_local_perm_days(subspace_size); //variables to find the local optimal..
      double best_local_score = S.score;
 
@@ -49,14 +51,14 @@ void Individual::subspace_local_search()
 //       cout << "Time taken by function: "<< duration.count()/1.0e6 << " seconds" << endl; 
         if( best_local_score < S.score) 
 	{
-	   
 	   for(int i = 0 ; i < subspace_size; i++)
 	   {
 	     if(best_local_perm_days[i] == NOT_CHECK)continue;
 	     S.x[best_local_perm_family[i]] = domain[best_local_perm_family[i]][best_local_perm_days[i]];
 	   }
    	   SW->evaluate(S);
-	printf("%.8f %.8f %.8f\n", best_local_score ,S.score, SW->evaluate(S.x));
+	   improved = true;
+//	printf("%.8f %.8f %.8f\n", best_local_score ,S.score, SW->evaluate(S.x));
 //   	  	print(S.x_var);
 	}
 
@@ -199,14 +201,25 @@ void Individual::try_all_permutations(struct Solution &S, const vector<int> &per
 }
 void Individual::localSearch()
 {
-
+ subspace_local_search();
 }
 int Individual::getDistance(Individual &ind){
-return 0;
+   int dist = 0;
+   for(int i = 0; i  < ind.x_var.size(); i++)
+      dist += (ind.x_var[i]!=x_var[i]);	
+   return dist;
 }
 void Individual::Mutation(double pm){
+   for(int i = 0; i < x_var.size(); i++)
+     if(generateRandomDouble0_Max(1) < pm)
+	x_var[i] = domain[i][rand()%domain[i].size()];
+   
 }
 void Individual::Crossover(Individual &ind){
+  //uniform crossover...
+  for(int i = 0 ; i < ind.x_var.size(); i++)
+     if(generateRandomDouble0_Max(1)<0.5)
+	swap(ind.x_var[i], this->x_var[i]);	
 }
 void Individual::print(vector<int> &sol){
   cout << "family_id,assigned_day"<<endl;

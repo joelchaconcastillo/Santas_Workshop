@@ -1,6 +1,7 @@
 #include <sys/time.h>
 #include <iostream>
 #include <signal.h>
+#include <omp.h>
 
 #include "MA.h"
 #include "utils.h"
@@ -26,7 +27,6 @@ void MA::initPopulation(){
 		population.push_back(ei);	
 	}
 }
-
 //Select parents with binary selection
 void MA::selectParents(){
 	parents.clear();
@@ -55,15 +55,21 @@ void MA::crossover(){
 }
 
 void MA::mutation(){
+	 #pragma omp parallel for
 	for (int i = 0; i < offspring.size(); i++){
 		offspring[i]->Mutation(pm);
 	}
 }
 
 void MA::localSearch(){
+
+	for (int i = 0; i < offspring.size(); i++) cout << i << ": "<<offspring[i]->fitness <<endl;
+	 #pragma omp parallel for
 	for (int i = 0; i < offspring.size(); i++){
 		offspring[i]->localSearch();
 	}
+
+	for (int i = 0; i < offspring.size(); i++) cout << i << ": "<<offspring[i]->fitness <<endl;
 }
 
 
@@ -100,6 +106,7 @@ void MA::replacement(){
 
 	//Select next N - 1 solution
 	double D = DI - DI * elapsedTime / finalTime;
+	//cout <<D <<endl;
 	//cout << "Distancia requerida: " << D << endl;
 	while(population.size() != N){
 		//Update distances
@@ -147,28 +154,59 @@ void MA::initDI(){
 	meanDistance /= (population.size() * (population.size() - 1)) / 2;
 	DI = meanDistance * 1;//TODO: Check
 }
-
 void MA::run(){
 	initPopulation();
+	evaluation(population);
 	initDI();
 	int generation = 0;
-	while(true){//Infinitas generaciones
+	struct timeval currentTime; 
+	gettimeofday(&currentTime, NULL);
+	double elapsedTime = (double) (currentTime.tv_sec) + (double) (currentTime.tv_usec)/1.0e6;
+	elapsedTime -= initialTime;
+	while( elapsedTime < finalTime  ){//Infinitas generaciones
+	
 		int minDistance = INT_MAX;
 		for (int i = 0; i < population.size(); i++){
 			for (int j = i + 1; j < population.size(); j++){
 				minDistance = min(minDistance, population[i]->getDistance(*(population[j])));
 			}
 		}
-		//cout << "Distancia: " << minDistance << endl;
-
-		//cout << "Generacion " << generation << endl;
+	//	cout << "Distancia: " << minDistance <<endl;
+		cout << "========================" <<endl;
+		cout << "Generacion " << generation << endl;
 		selectParents();
 		crossover();
-		mutation();
+		//mutation();
+		evaluation(offspring);
+		
 		localSearch();
 		replacement();
 		generation++;
+	       printBest();
+	    gettimeofday(&currentTime, NULL);
+	    elapsedTime = (double) (currentTime.tv_sec) + (double) (currentTime.tv_usec)/1.0e6;
+	    elapsedTime -= initialTime;
+
 	}
-	printBest();
 }
 
+void MA::printBest()
+{
+   double best_fitness = DBL_MAX;
+   for(int i = 0 ; i < population.size(); i++)
+   {
+	if(best_fitness > population[i]->fitness)
+	{
+	  best_fitness = population[i]->fitness;
+	}
+   }
+	cout << best_fitness <<endl;
+}
+void MA::evaluation(vector< Individual * > &pool)
+{
+   #pragma omp parallel for
+   for(int i = 0 ; i  < pool.size(); i++)
+   { 
+	pool[i]->Evaluation();
+   }
+}

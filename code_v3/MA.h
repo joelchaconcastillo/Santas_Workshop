@@ -25,9 +25,11 @@ class MA {
 		void initDI();
 		void selectParents();
 		void crossover();
+		void evaluation(vector<Individual *> &pool);
 		void mutation();
 		void localSearch();
 		void replacement();
+		void printBest();
 
 		//Internal attributes of MA
 		vector< Individual * > population; 
