@@ -26,26 +26,20 @@ void Individual::subspace_local_search()
 
   cout << "current...." <<S.score<<endl;
 
-  vector<int> fam_perm;
-  for(int i = 0; i < x_var.size(); i++) fam_perm.push_back(i);
-
+  
   int N_training = 1;
-  int subspace_size= 2;//1+rand()%6;
-  int sub_domain_size = 9;
+  int subspace_size= 10;//1+rand()%6;
+  int sub_domain_size = 2;
   int Start = 0;
   bool improved = true;
-  while(improved)
+     vector<int> fam_perm;
+    for(int i = 0; i < x_var.size(); i++) fam_perm.push_back(i);
+
+  while(true)//improved)
   { 
 	improved = false;
      vector<int> best_local_perm_family(subspace_size), best_local_perm_days(subspace_size); //variables to find the local optimal..
      double best_local_score = S.score;
-    for(int i1 = 0; i1 < x_var.size(); i1++) 
-   {
-//	cout << i1 <<endl;
-    for(int j1 = i1+1; j1 < x_var.size(); j1++) 
-   {
-	fam_perm[0] = i1;
-	fam_perm[1] = j1;
      auto start = high_resolution_clock::now();  ///taking the computing time..
      for(int ite = 0; ite < N_training; ite++)
      {
@@ -55,11 +49,11 @@ void Individual::subspace_local_search()
        auto stop = high_resolution_clock::now(); 
        auto duration = duration_cast<microseconds>(stop - start); 
        //// 
+	cout << best_local_score <<endl;
 //       cout << "Time taken by function: "<< duration.count()/1.0e6 << " seconds" << endl; 
         if( best_local_score < S.score-1e-10) 
 	{
 	printf("===============\n%f %f %f\n", best_local_score ,S.score, SW.evaluate(S.x));
-	   cout << i1 <<" " << j1 <<endl;
 	   for(int i = 0 ; i < subspace_size; i++)
 	     cout << S.x[best_local_perm_family[i]] << " ";
 	cout <<endl;
@@ -75,15 +69,10 @@ void Individual::subspace_local_search()
 	printf("%f %f %f\n", best_local_score ,S.score, SW.evaluate(S.x));
 	improved= true;
 //   	  	print(S.x_var);
-    }
-    }
-   }
-//	exit(0);
-//     Start++;
-//	Start %=x_var.size();
+        }
   }
-  fitness = S.score;
-  x_var = S.x;
+    fitness = S.score;
+    x_var = S.x;
 }
 bool Individual::my_next_combination(vector<int> &row_perm, const vector<int> &upper_opt)
 {

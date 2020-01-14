@@ -1,3 +1,4 @@
+#include <omp.h>
 #include "MA.h"
 
 int main(int argc, char **argv){

@@ -186,6 +186,7 @@ void MA::run(){
 	    gettimeofday(&currentTime, NULL);
 	    elapsedTime = (double) (currentTime.tv_sec) + (double) (currentTime.tv_usec)/1.0e6;
 	    elapsedTime -= initialTime;
+	    cout << "remaining time... "<< finalTime - elapsedTime <<endl;
 
 	}
 }

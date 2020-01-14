@@ -1,3 +1,4 @@
+#include <omp.h>
 #include <signal.h>
 #include <chrono> 
 #include "SantaWorkshop.h"
@@ -30,26 +31,27 @@ void Individual::subspace_local_search()
 
   int N_training = 100;
   int subspace_size= 2;//1+rand()%3;
-  int sub_domain_size = 9;
+  int sub_domain_size = 4;
   bool improved = true;
-  int maxite = 100, cont=0;
+  int maxite = 15, cont=0;
   while(improved)// && cont++ < maxite)
   { 
      improved = false;
      vector<int> best_local_perm_family(subspace_size), best_local_perm_days(subspace_size); //variables to find the local optimal..
      double best_local_score = S.score;
-
-     auto start = high_resolution_clock::now();  ///taking the computing time..
-     for(int ite = 0; ite < N_training; ite++)
+     while(cont < maxite)
      {
-	random_shuffle(fam_perm.begin(), fam_perm.end());
-        try_all_permutations(S, fam_perm, best_local_score, best_local_perm_family, best_local_perm_days, sub_domain_size); //it replaces the best solution..
-     }
+        auto start = high_resolution_clock::now();  ///taking the computing time..
+        for(int ite = 0; ite < N_training; ite++)
+        {
+   	random_shuffle(fam_perm.begin(), fam_perm.end());
+           try_all_permutations(S, fam_perm, best_local_score, best_local_perm_family, best_local_perm_days, sub_domain_size); //it replaces the best solution..
+        }
        auto stop = high_resolution_clock::now(); 
        auto duration = duration_cast<microseconds>(stop - start); 
        //// 
 //       cout << "Time taken by function: "<< duration.count()/1.0e6 << " seconds" << endl; 
-        if( best_local_score < S.score) 
+        if( best_local_score < S.score-1e-10) 
 	{
 	   for(int i = 0 ; i < subspace_size; i++)
 	   {
@@ -58,9 +60,14 @@ void Individual::subspace_local_search()
 	   }
    	   SW.evaluate(S);
 	   improved = true;
+	   cont = 0;
+	if(omp_get_thread_num() == 1)
+	printf("%f\n", best_local_score);
 //	printf("%.8f %.8f %.8f\n", best_local_score ,S.score, SW->evaluate(S.x));
 //   	  	print(S.x_var);
 	}
+	cont++;
+     }
   }
   fitness = S.score;
   x_var = S.x;
@@ -186,7 +193,7 @@ void Individual::try_all_permutations(struct Solution &S, const vector<int> &per
      {
        current_score = SW.incremental_evaluation_unfeasible(S, row_perm, perm);
        if(current_score <= 0) //if this movement changes to feasible, then check the feasibility, therefore tthe unfeasibility score should be major than the feasible score..
-       current_score = SW->incremental_evaluation(S, fam_day_perm, Real_size, list_days, Real_size_list_days);
+       current_score = SW.incremental_evaluation(S, fam_day_perm, Real_size, list_days, Real_size_list_days);
 //            current_score = SW->incremental_evaluation(S, fam_day_perm, Real_size);
 //       //   current_score = -SW->incremental_evaluation(S, row_perm, perm);
      }
