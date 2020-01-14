@@ -26,20 +26,26 @@ void Individual::subspace_local_search()
 
   cout << "current...." <<S.score<<endl;
 
-  //vector<int> fam_perm;
-//  for(int i = 0; i < x_var.size(); i++) fam_perm.push_back(i);
+  vector<int> fam_perm;
+  for(int i = 0; i < x_var.size(); i++) fam_perm.push_back(i);
 
   int N_training = 1;
-  int subspace_size= 1+rand()%6;
-  int sub_domain_size = 2;
+  int subspace_size= 2;//1+rand()%6;
+  int sub_domain_size = 9;
   int Start = 0;
-  while(true)
+  bool improved = true;
+  while(improved)
   { 
+	improved = false;
      vector<int> best_local_perm_family(subspace_size), best_local_perm_days(subspace_size); //variables to find the local optimal..
      double best_local_score = S.score;
-     vector<int> fam_perm;
-	for(int i = Start; i < Start + subspace_size; i++) fam_perm.push_back(i%x_var.size());
-     
+    for(int i1 = 0; i1 < x_var.size(); i1++) 
+   {
+//	cout << i1 <<endl;
+    for(int j1 = i1+1; j1 < x_var.size(); j1++) 
+   {
+	fam_perm[0] = i1;
+	fam_perm[1] = j1;
      auto start = high_resolution_clock::now();  ///taking the computing time..
      for(int ite = 0; ite < N_training; ite++)
      {
@@ -50,20 +56,31 @@ void Individual::subspace_local_search()
        auto duration = duration_cast<microseconds>(stop - start); 
        //// 
 //       cout << "Time taken by function: "<< duration.count()/1.0e6 << " seconds" << endl; 
-        if( best_local_score < S.score) 
+        if( best_local_score < S.score-1e-10) 
 	{
+	printf("===============\n%f %f %f\n", best_local_score ,S.score, SW.evaluate(S.x));
+	   cout << i1 <<" " << j1 <<endl;
+	   for(int i = 0 ; i < subspace_size; i++)
+	     cout << S.x[best_local_perm_family[i]] << " ";
+	cout <<endl;
+
 	   
 	   for(int i = 0 ; i < subspace_size; i++)
 	   {
 	     if(best_local_perm_days[i] == NOT_CHECK)continue;
 	     S.x[best_local_perm_family[i]] = domain[best_local_perm_family[i]][best_local_perm_days[i]];
+	     
 	   }
    	   SW.evaluate(S);
-	printf("%.8f %.8f %.8f\n", best_local_score ,S.score, SW.evaluate(S.x));
+	printf("%f %f %f\n", best_local_score ,S.score, SW.evaluate(S.x));
+	improved= true;
 //   	  	print(S.x_var);
-	}
-     Start++;
-	Start %=x_var.size();
+    }
+    }
+   }
+//	exit(0);
+//     Start++;
+//	Start %=x_var.size();
   }
   fitness = S.score;
   x_var = S.x;
@@ -169,7 +186,7 @@ void Individual::try_all_permutations(struct Solution &S, const vector<int> &per
 {
    int k_subspace = best_local_perm_family.size(), Real_size=0;
    vector<int> row_perm(k_subspace, NOT_CHECK), upper_opt(k_subspace, sub_domain_size); //it can be optimized................
-   for(int i = 0; i < k_subspace; i++) upper_opt[i] = 1+rand()%9;
+   //for(int i = 0; i < k_subspace; i++) upper_opt[i] = 1+rand()%9;
    vector<pair<int, int>> fam_day_perm(k_subspace);
    vector<bool> grid_days(SW.N_DAYS, false);
    vector<int> list_days(SW.N_DAYS);
@@ -178,19 +195,19 @@ void Individual::try_all_permutations(struct Solution &S, const vector<int> &per
    while(my_next_combination(row_perm, upper_opt, perm, fam_day_perm, Real_size, grid_days, list_days, Real_size_list_days, S.x) )
    {
      //check first feasibility and then score..
-     double current_score;
+     double current_score = DBL_MAX;
      if(S.feasible)
      {
        //current_score = SW->incremental_evaluation(S, row_perm, perm);
-       //current_score = SW->incremental_evaluation(S, fam_day_perm, Real_size);
+       //current_score = SW.incremental_evaluation(S, fam_day_perm, Real_size);
        current_score = SW.incremental_evaluation(S, fam_day_perm, Real_size, list_days, Real_size_list_days);
      }
      else
      {
        current_score = SW.incremental_evaluation_unfeasible(S, row_perm, perm);
-//       if(current_score <= 0) //if this movement changes to feasible, then check the feasibility, therefore tthe unfeasibility score should be major than the feasible score..
-//       current_score = SW->incremental_evaluation(S, fam_day_perm, Real_size, list_days, Real_size_list_days);
-//            current_score = SW->incremental_evaluation(S, fam_day_perm, Real_size);
+       if(current_score <= 0) //if this movement changes to feasible, then check the feasibility, therefore tthe unfeasibility score should be major than the feasible score..
+         current_score = SW.incremental_evaluation(S, fam_day_perm, Real_size, list_days, Real_size_list_days);
+//            current_score = SW.incremental_evaluation(S, fam_day_perm, Real_size);
 //       //   current_score = -SW->incremental_evaluation(S, row_perm, perm);
      }
      if( best_local_score > current_score )

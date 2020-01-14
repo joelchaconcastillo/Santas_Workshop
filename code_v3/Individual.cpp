@@ -30,7 +30,7 @@ void Individual::subspace_local_search()
 
   int N_training = 100;
   int subspace_size= 2;//1+rand()%3;
-  int sub_domain_size = 1;
+  int sub_domain_size = 9;
   bool improved = true;
   int maxite = 100, cont=0;
   while(improved)// && cont++ < maxite)
@@ -61,7 +61,6 @@ void Individual::subspace_local_search()
 //	printf("%.8f %.8f %.8f\n", best_local_score ,S.score, SW->evaluate(S.x));
 //   	  	print(S.x_var);
 	}
-
   }
   fitness = S.score;
   x_var = S.x;
@@ -167,7 +166,7 @@ void Individual::try_all_permutations(struct Solution &S, const vector<int> &per
 {
    int k_subspace = best_local_perm_family.size(), Real_size=0;
    vector<int> row_perm(k_subspace, NOT_CHECK), upper_opt(k_subspace, sub_domain_size); //it can be optimized................
-   for(int i = 0; i < k_subspace; i++) upper_opt[i] = 1+rand()%9;
+   //for(int i = 0; i < k_subspace; i++) upper_opt[i] = 1+rand()%9;
    vector<pair<int, int>> fam_day_perm(k_subspace);
    vector<bool> grid_days(SW.N_DAYS, false);
    vector<int> list_days(SW.N_DAYS);
@@ -186,8 +185,8 @@ void Individual::try_all_permutations(struct Solution &S, const vector<int> &per
      else
      {
        current_score = SW.incremental_evaluation_unfeasible(S, row_perm, perm);
-//       if(current_score <= 0) //if this movement changes to feasible, then check the feasibility, therefore tthe unfeasibility score should be major than the feasible score..
-//       current_score = SW->incremental_evaluation(S, fam_day_perm, Real_size, list_days, Real_size_list_days);
+       if(current_score <= 0) //if this movement changes to feasible, then check the feasibility, therefore tthe unfeasibility score should be major than the feasible score..
+       current_score = SW->incremental_evaluation(S, fam_day_perm, Real_size, list_days, Real_size_list_days);
 //            current_score = SW->incremental_evaluation(S, fam_day_perm, Real_size);
 //       //   current_score = -SW->incremental_evaluation(S, row_perm, perm);
      }

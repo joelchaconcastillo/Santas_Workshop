@@ -118,6 +118,7 @@ double SantaWorkshop::incremental_evaluation(struct Solution &S, vector<pair<int
     for(int id = 0; id < Real_Size_Days; id++)
     {
  	int i = days[id], i2 = min(i+1, N_DAYS-1);
+	if(quality_unfeasibility(S.daily_occupancy[i]) + quality_unfeasibility(S.daily_occupancy[i2]) <=0)
         accounting_penalty -=  accounting_costs[S.daily_occupancy[i]-125][S.daily_occupancy[i2]-125];
     }
 
