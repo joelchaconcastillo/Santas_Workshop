@@ -4,7 +4,7 @@ int main(int argc, char **argv){
 	int N = 10;
 	double pc = 0.9;
 	double pm = 0.01;
-	double finalTime = 10 * 60;
+	double finalTime = 60 * 60;
 	unsigned long l = 1578701648;
  //       l=1;
       l = time(NULL);

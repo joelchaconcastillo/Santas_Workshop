@@ -33,7 +33,7 @@ void Individual::subspace_local_search()
   int sub_domain_size = 1;
   bool improved = true;
   int maxite = 100, cont=0;
-  while(improved && cont++ < maxite)
+  while(improved)// && cont++ < maxite)
   { 
      improved = false;
      vector<int> best_local_perm_family(subspace_size), best_local_perm_days(subspace_size); //variables to find the local optimal..
