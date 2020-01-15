@@ -35,6 +35,7 @@ class MA {
 		vector< Individual * > population; 
 		vector< Individual * > parents;
 		vector< Individual * > offspring;
+		
 		double initialTime;
 		double DI;
 		SantaWorkshop SW;

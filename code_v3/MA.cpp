@@ -89,11 +89,14 @@ void MA::replacement(){
 	
 	//Join population and offspring
 	for (int i = 0; i < population.size(); i++){
+		if(bestI.fitness > population[i]->fitness) bestI = *(population[i]);
+
 		all.push_back(population[i]);
 		all.back()->dist = INT_MAX;
 	}
 	population.clear();
 	for (int i = 0; i < offspring.size(); i++){
+		if(bestI.fitness > offspring[i]->fitness) bestI = *(offspring[i]);
 		all.push_back(offspring[i]);
 		all.back()->dist = INT_MAX;
 	}
@@ -169,6 +172,7 @@ void MA::run(){
 	initPopulation();
 	evaluation(population);
 	initDI();
+	bestI = *(population[0]);
 	int generation = 0;
 	struct timeval currentTime; 
 	gettimeofday(&currentTime, NULL);
@@ -200,6 +204,7 @@ void MA::run(){
 	    cout << "remaining time... "<< finalTime - elapsedTime <<endl;
 
 	}
+	bestI.print();
 }
 
 void MA::printBest()
