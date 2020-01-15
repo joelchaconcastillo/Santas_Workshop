@@ -25,7 +25,6 @@ void Individual::subspace_local_search()
 
 
   int N_training = 1000;
-  
   //fill a pool of random families...
   vector< vector<int> > permutation_families;
   vector<int> fam_perm;
@@ -89,15 +88,16 @@ best_parameterization.second.second = 9;
     best_local_perm_family.resize(best_parameterization.second.first);
     best_local_perm_days.resize(best_parameterization.second.first);
  //////testing data.....
-     int maxite = 20, cont=0;
+     int maxite = 20, cont=0, ite=0;
      double best_local_score = S.score;
    //  vector<int> best_local_perm_family(best_parameterization.second.first), best_local_perm_days(best_parameterization.second.first); //variables to find the local optimal..
+//	cout << SW.my_random_shuffle.size();
      while(cont < maxite)
      {
 	for(int i = 0; i < 100; i++)
 	{
-          random_shuffle(fam_perm.begin(), fam_perm.end());
-          try_all_permutations(S, fam_perm, best_local_score, best_local_perm_family, best_local_perm_days, best_parameterization.second.second, best_parameterization.second.first); //it replaces the best solution..
+         // random_shuffle(fam_perm.begin(), fam_perm.end());
+          try_all_permutations(S, SW.my_random_shuffle[(ite++)%SW.my_random_shuffle.size()], best_local_score, best_local_perm_family, best_local_perm_days, best_parameterization.second.second, best_parameterization.second.first); //it replaces the best solution..
 	}
         if( best_local_score < S.score-1e-10) 
 	{

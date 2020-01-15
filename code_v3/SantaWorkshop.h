@@ -52,5 +52,6 @@ class SantaWorkshop{
 	        vector< vector<double> > preference_costs, accounting_costs;
 //	        double preference_costs[6000][101], accounting_costs[200][200];
 		vector< vector<pair<int, int> > > table_permutations;
+ 		vector<vector<int>> my_random_shuffle;
 };
 #endif

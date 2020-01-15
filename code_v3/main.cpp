@@ -8,7 +8,7 @@ int main(int argc, char **argv){
 	double finalTime = 60 * 60;
 	unsigned long l = 1578701648;
  //       l=1;
-omp_set_num_threads(1);
+//omp_set_num_threads(1);
       l = time(NULL);
 	cout << l <<endl;
 	srand(l);

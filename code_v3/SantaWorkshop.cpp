@@ -8,6 +8,13 @@ using namespace std;
 long long best = 1e16;
 SantaWorkshop::SantaWorkshop(string file){
   load(file);
+  vector<int> tmp;
+   for(int i = 0; i < N_FAM; i++) tmp.push_back(i);
+  for(int i = 0; i < 10000;i++)
+  {
+    random_shuffle(tmp.begin(), tmp.end());
+    my_random_shuffle.push_back(tmp);
+  }
  // init_table_permutations(6);  
 }
 void SantaWorkshop::load_example(string file, vector<int> &x_var)
