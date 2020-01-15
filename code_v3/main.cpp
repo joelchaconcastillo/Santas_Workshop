@@ -5,9 +5,10 @@ int main(int argc, char **argv){
 	int N = 10;
 	double pc = 0.9;
 	double pm = 0.01;
-	double finalTime = 60 * 60;
+	double finalTime = 3*60 * 60;
 	unsigned long l = 1578701648;
  //       l=1;
+omp_set_num_threads(1);
       l = time(NULL);
 	cout << l <<endl;
 	srand(l);

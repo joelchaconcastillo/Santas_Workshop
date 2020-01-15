@@ -42,15 +42,23 @@ void MA::selectParents(){
 }
 
 void MA::crossover(){
+	cout << "============ crossover " <<endl;
+	cout << "before..."<<endl;
 	for (int i = 0; i < parents.size(); i++){
+		cout << i << ": "<< parents[i]->fitness <<endl;
 		Individual *ei = new Individual((this->SW));
 		*ei = *parents[i];
 		offspring.push_back(ei);
 	}
+	cout << "after..."<<endl;
 	for (int i = 0; i < offspring.size(); i+=2){
 		if (generateRandomDouble0_Max(1) <= pc){
 			offspring[i]->Crossover(*(offspring[i+1]));
 		}
+		offspring[i]->Evaluation();
+		offspring[i+1]->Evaluation();
+		cout << i << ": "<< offspring[i]->fitness <<endl;
+		cout << i+1 << ": "<< offspring[i+1]->fitness <<endl;
 	}
 }
 
@@ -63,13 +71,16 @@ void MA::mutation(){
 
 void MA::localSearch(){
 
-	for (int i = 0; i < offspring.size(); i++) cout << i << ": "<<offspring[i]->fitness <<endl;
+//	for (int i = 0; i < offspring.size(); i++) cout << i << ": "<<offspring[i]->fitness <<endl;
+	cout << "localsearch........"<<endl;
 	 #pragma omp parallel for
 	for (int i = 0; i < offspring.size(); i++){
-		offspring[i]->localSearch();
+		cout << i << ": "<<offspring[i]->fitness <<endl;
+		  offspring[i]->localSearch();
+		cout << i << ": "<<offspring[i]->fitness <<endl;
 	}
 
-	for (int i = 0; i < offspring.size(); i++) cout << i << ": "<<offspring[i]->fitness <<endl;
+//	for (int i = 0; i < offspring.size(); i++) cout << i << ": "<<offspring[i]->fitness <<endl;
 }
 
 

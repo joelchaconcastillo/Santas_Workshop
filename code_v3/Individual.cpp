@@ -21,54 +21,91 @@ void Individual::subspace_local_search()
   struct Solution S;
   S.score = fitness;
   S.x = x_var;
-
-  
   SW.evaluate(S);
 
 
+  int N_training = 1000;
+  
+  //fill a pool of random families...
+  vector< vector<int> > permutation_families;
   vector<int> fam_perm;
   for(int i = 0; i < x_var.size(); i++) fam_perm.push_back(i);
 
-  int N_training = 100;
-  int subspace_size= 2;//1+rand()%3;
-  int sub_domain_size = 4;
-  bool improved = true;
-  int maxite = 15, cont=0;
-  while(improved)// && cont++ < maxite)
-  { 
-     improved = false;
-     vector<int> best_local_perm_family(subspace_size), best_local_perm_days(subspace_size); //variables to find the local optimal..
+ //Training configuration...
+ //random ampling permutaitons of families...
+ for(int i = 0;  i < N_training; i++)
+ {
+   random_shuffle(fam_perm.begin(), fam_perm.end());
+   permutation_families.push_back(vector<int>(fam_perm.begin(), fam_perm.begin()+10));
+ }
+
+ vector<int> opts_subspace_size, opts_sub_domain_size;
+ pair<int, pair<int, int> > best_parameterization; //score, sub space size and sub space domain
+ opts_subspace_size.push_back(1);
+ opts_subspace_size.push_back(2);
+ opts_subspace_size.push_back(3);
+ opts_subspace_size.push_back(4);
+
+ opts_sub_domain_size.push_back(1);
+ opts_sub_domain_size.push_back(5);
+ opts_sub_domain_size.push_back(9);
+best_parameterization.second.first = opts_subspace_size[0]; 
+best_parameterization.second.second = opts_sub_domain_size[0]; 
+best_parameterization.first = S.score;
+
+    vector<int> best_local_perm_family(10), best_local_perm_days(10); //variables to find the local optimal..
+
+ for(int a = 0; a < opts_subspace_size.size(); a++)
+ {
+  for(int b = 0; b < opts_sub_domain_size.size(); b++)
+  {  
+    struct Solution Stmp = S;
+    double current_score = S.score;
+   for(int i = 0 ; i  < permutation_families.size(); i++)
+   {
+        try_all_permutations(S, permutation_families[i], current_score, best_local_perm_family, best_local_perm_days, opts_sub_domain_size[b], opts_subspace_size[a]); //it replaces the best solution..
+        if( current_score < S.score-1e-10) 
+	{
+	   for(int i = 0 ; i < best_parameterization.second.first; i++)
+	   {
+	     if(best_local_perm_days[i] == NOT_CHECK)continue;
+	     Stmp.x[best_local_perm_family[i]] = domain[best_local_perm_family[i]][best_local_perm_days[i]];
+	   }
+   	   SW.evaluate(Stmp);
+	}
+   }
+   if( Stmp.score < best_parameterization.first )
+   {
+	  best_parameterization.first = Stmp.score;
+	  best_parameterization.second.first = opts_subspace_size[a]; 
+	  best_parameterization.second.second = opts_sub_domain_size[b]; 
+   }
+  }
+ }
+ cout << "best config K:" << best_parameterization.second.first<<" opts:"<<best_parameterization.second.second << endl;
+
+    best_local_perm_family.resize(best_parameterization.second.first);
+    best_local_perm_days.resize(best_parameterization.second.first);
+ //////testing data.....
+     int maxite = 15, cont=0;
      double best_local_score = S.score;
+   //  vector<int> best_local_perm_family(best_parameterization.second.first), best_local_perm_days(best_parameterization.second.first); //variables to find the local optimal..
      while(cont < maxite)
      {
-        auto start = high_resolution_clock::now();  ///taking the computing time..
-        for(int ite = 0; ite < N_training; ite++)
-        {
-   	random_shuffle(fam_perm.begin(), fam_perm.end());
-           try_all_permutations(S, fam_perm, best_local_score, best_local_perm_family, best_local_perm_days, sub_domain_size); //it replaces the best solution..
-        }
-       auto stop = high_resolution_clock::now(); 
-       auto duration = duration_cast<microseconds>(stop - start); 
-       //// 
-//       cout << "Time taken by function: "<< duration.count()/1.0e6 << " seconds" << endl; 
+        random_shuffle(fam_perm.begin(), fam_perm.end());
+        try_all_permutations(S, fam_perm, best_local_score, best_local_perm_family, best_local_perm_days, best_parameterization.second.second, best_parameterization.second.first); //it replaces the best solution..
         if( best_local_score < S.score-1e-10) 
 	{
-	   for(int i = 0 ; i < subspace_size; i++)
+	   for(int i = 0 ; i < best_parameterization.second.first; i++)
 	   {
 	     if(best_local_perm_days[i] == NOT_CHECK)continue;
 	     S.x[best_local_perm_family[i]] = domain[best_local_perm_family[i]][best_local_perm_days[i]];
 	   }
    	   SW.evaluate(S);
-	   improved = true;
 	   cont = 0;
-	if(omp_get_thread_num() == 1)
-	printf("%f\n", best_local_score);
-//	printf("%.8f %.8f %.8f\n", best_local_score ,S.score, SW->evaluate(S.x));
-//   	  	print(S.x_var);
 	}
 	cont++;
      }
-  }
   fitness = S.score;
   x_var = S.x;
 }
@@ -169,9 +206,9 @@ bool Individual::my_next_combination(vector<int> &row_perm, const vector<int> &u
    if(cont_nines == size_w+1) return false;
    return true;
 }
-void Individual::try_all_permutations(struct Solution &S, const vector<int> &perm, double &best_local_score, vector<int> &best_local_perm_family, vector<int> &best_local_perm_days, int sub_domain_size)
+void Individual::try_all_permutations(struct Solution &S, const vector<int> &perm, double &best_local_score, vector<int> &best_local_perm_family, vector<int> &best_local_perm_days, int sub_domain_size, int k_subspace)
 {
-   int k_subspace = best_local_perm_family.size(), Real_size=0;
+   int Real_size = 0;
    vector<int> row_perm(k_subspace, NOT_CHECK), upper_opt(k_subspace, sub_domain_size); //it can be optimized................
    //for(int i = 0; i < k_subspace; i++) upper_opt[i] = 1+rand()%9;
    vector<pair<int, int>> fam_day_perm(k_subspace);
@@ -203,6 +240,30 @@ void Individual::try_all_permutations(struct Solution &S, const vector<int> &per
 	copy_n(perm.begin(), k_subspace, best_local_perm_family.begin());
 	copy_n(row_perm.begin(), k_subspace , best_local_perm_days.begin());
      }
+   }
+}
+void Individual::try_all_permutations(struct Solution &S, const vector<int> &perm, double &best_local_score, int sub_domain_size, int k_subspace)
+{
+   int Real_size=0;
+   vector<int> row_perm(k_subspace, NOT_CHECK), upper_opt(k_subspace, sub_domain_size); //it can be optimized................
+   vector<pair<int, int>> fam_day_perm(k_subspace);
+   vector<bool> grid_days(SW.N_DAYS, false);
+   vector<int> list_days(SW.N_DAYS);
+   int Real_size_list_days = 0;
+   while(my_next_combination(row_perm, upper_opt, perm, fam_day_perm, Real_size, grid_days, list_days, Real_size_list_days, S.x) )
+   {
+     //check first feasibility and then score..
+     double current_score;
+     if(S.feasible)
+       current_score = SW.incremental_evaluation(S, fam_day_perm, Real_size, list_days, Real_size_list_days);
+     else
+     {
+       current_score = SW.incremental_evaluation_unfeasible(S, row_perm, perm);
+       if(current_score <= 0) //if this movement changes to feasible, then check the feasibility, therefore tthe unfeasibility score should be major than the feasible score..
+       current_score = SW.incremental_evaluation(S, fam_day_perm, Real_size, list_days, Real_size_list_days);
+     }
+     if( best_local_score > current_score )
+	best_local_score = current_score;
    }
 }
 void Individual::localSearch()
