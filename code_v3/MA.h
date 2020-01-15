@@ -38,6 +38,7 @@ class MA {
 		
 		double initialTime;
 		double DI;
+		vector<default_random_engine> generators;
 		SantaWorkshop SW;
 	        Individual bestI;
 };

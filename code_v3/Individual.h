@@ -28,6 +28,8 @@ class Individual{
 	        inline void Evaluation(){ this->fitness = this->SW.evaluate(this->x_var);}
 		void subspace_local_search();
 		void localSearch();
+		void localSearch(default_random_engine& engine);
+		void subspace_local_search(default_random_engine& engine);
 		void perturbe(vector<int> &x, int nvar);
 
 		void try_all_permutations(struct Solution &S, const vector<int> &perm, double &best_local_score, vector<int> &best_local_perm_family, vector<int> &best_local_perm_days, int subdomain_size, int k_subspace);

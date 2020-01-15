@@ -17,6 +17,11 @@ MA::MA(int N_, double pc_, double pm_, double finalTime_, SantaWorkshop &SW_){
 	this->finalTime = finalTime_;
 	struct timeval currentTime; 
 	gettimeofday(&currentTime, NULL);
+        random_device r;
+        
+        for (int i = 0, N = omp_get_max_threads(); i < N; ++i) {
+           generators.emplace_back(default_random_engine(r()));
+        }
 	this->initialTime = (double) (currentTime.tv_sec) + (double) (currentTime.tv_usec)/1.0e6;
 }
 
@@ -76,7 +81,7 @@ void MA::localSearch(){
 	 #pragma omp parallel for
 	for (int i = 0; i < offspring.size(); i++){
 		cout << i << ": "<<offspring[i]->fitness <<endl;
-		  offspring[i]->localSearch();
+		  offspring[i]->localSearch(generators[omp_get_thread_num()]);
 		cout << i << ": "<<offspring[i]->fitness <<endl;
 	}
 
