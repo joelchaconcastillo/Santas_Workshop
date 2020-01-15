@@ -10,7 +10,7 @@ void printBest();
 class Individual{
 	public:
 		
-		Individual(SantaWorkshop &SW_){
+		Individual(SantaWorkshop SW_){
 		  this->SW= SW_;
 		  this->domain = SW_.domain;
 		  //initialization....
@@ -30,7 +30,8 @@ class Individual{
 		void localSearch();
 		void perturbe(vector<int> &x, int nvar);
 
-		void try_all_permutations(struct Solution &S, const vector<int> &perm, double &best_local_score, vector<int> &best_local_perm_family, vector<int> &best_local_perm_days, int subdomain_size);
+		void try_all_permutations(struct Solution &S, const vector<int> &perm, double &best_local_score, vector<int> &best_local_perm_family, vector<int> &best_local_perm_days, int subdomain_size, int k_subspace);
+		void try_all_permutations(struct Solution &S, const vector<int> &perm, double &best_local_score, int sub_domain_size, int k_subspace);
 
 		bool my_next_combination(vector<int> &row_perm, const vector<int> &upper_opt, const vector<int> &fam_perm, vector<pair<int, int> > &fam_day_perm, int &Real_size);
 
